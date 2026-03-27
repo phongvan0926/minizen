@@ -1,0 +1,199 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  BROKER
+  LANDLORD
+  CUSTOMER
+}
+
+enum PropertyStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DealStatus {
+  PENDING
+  CONFIRMED
+  PAID
+  CANCELLED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  phone         String?
+  password      String
+  role          Role      @default(CUSTOMER)
+  avatar        String?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  properties    Property[]   @relation("LandlordProperties")
+  brokerDeals   Deal[]       @relation("BrokerDeals")
+  customerDeals Deal[]       @relation("CustomerDeals")
+  shareLinks    ShareLink[]
+  sentInquiries   RoomInquiry[] @relation("BrokerInquiries")
+  notifications   Notification[]
+
+  @@map("users")
+}
+
+model Property {
+  id            String         @id @default(cuid())
+  landlordId    String
+  name          String
+  description   String?
+  fullAddress   String
+  district      String
+  streetName    String
+  city          String         @default("Hà Nội")
+  latitude      Float?
+  longitude     Float?
+  totalFloors   Int            @default(1)
+  totalRooms    Int            @default(0)
+  amenities     String[]       @default([])
+  images        String[]       @default([])
+  status        PropertyStatus @default(PENDING)
+  isActive      Boolean        @default(true)
+  // NEW fields
+  zaloPhone     String?        // SĐT Zalo chủ nhà (tạo link zalo)
+  landlordNotes String?        // Lưu ý của chủ nhà cho MG
+  parkingCar    Boolean        @default(false)  // Ô tô đỗ cửa
+  parkingBike   Boolean        @default(true)   // Để xe máy/xe đạp
+  evCharging    Boolean        @default(false)  // Sạc xe điện
+  petAllowed    Boolean        @default(false)  // Nuôi thú cưng
+  foreignerOk   Boolean        @default(false)  // Cho người nước ngoài thuê
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  // Relations
+  landlord      User           @relation("LandlordProperties", fields: [landlordId], references: [id])
+  rooms         Room[]
+
+  @@map("properties")
+}
+
+model Room {
+  id              String    @id @default(cuid())
+  propertyId      String
+  roomNumber      String
+  floor           Int       @default(1)
+  areaSqm         Float
+  priceMonthly    Float
+  deposit         Float     @default(0)
+  description     String?
+  amenities       String[]  @default([])
+  images          String[]  @default([])
+  isAvailable     Boolean   @default(true)
+  isApproved      Boolean   @default(false)
+  viewCount       Int       @default(0)
+  // NEW fields
+  roomType        String    @default("don")  // don, gac_xep, 1k1n, 2k1n, studio, duplex
+  landlordNotes   String?   // Lưu ý riêng cho MG (VD: khách phải đặt cọc 2 tháng)
+  commissionJson  String?   // JSON: {"6":40,"12":50} = 6 tháng 40%, 12 tháng 50%
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  property        Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  deals           Deal[]
+  shareLinks      ShareLink[]
+  inquiries       RoomInquiry[]
+
+  @@map("rooms")
+}
+
+model Deal {
+  id                String     @id @default(cuid())
+  roomId            String
+  brokerId          String
+  customerId        String?
+  customerName      String?
+  customerPhone     String?
+  dealPrice         Float
+  commissionTotal   Float      @default(0)
+  commissionBroker  Float      @default(0)
+  commissionCompany Float      @default(0)
+  commissionRate    Float      @default(100)
+  notes             String?
+  status            DealStatus @default(PENDING)
+  dealDate          DateTime   @default(now())
+  confirmedAt       DateTime?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  // Relations
+  room              Room       @relation(fields: [roomId], references: [id])
+  broker            User       @relation("BrokerDeals", fields: [brokerId], references: [id])
+  customer          User?      @relation("CustomerDeals", fields: [customerId], references: [id])
+
+  @@map("deals")
+}
+
+model ShareLink {
+  id          String    @id @default(cuid())
+  roomId      String
+  brokerId    String
+  token       String    @unique
+  viewCount   Int       @default(0)
+  isActive    Boolean   @default(true)
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  room        Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  broker      User      @relation(fields: [brokerId], references: [id])
+
+  @@map("share_links")
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+
+  @@map("settings")
+}
+
+model RoomInquiry {
+  id          String    @id @default(cuid())
+  roomId      String
+  brokerId    String
+  message     String    @default("Còn phòng không?")
+  reply       String?   // "CÒN" / "HẾT" / custom message
+  repliedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  room        Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  broker      User      @relation("BrokerInquiries", fields: [brokerId], references: [id])
+
+  @@map("room_inquiries")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // "inquiry", "deal", "approval", "reply"
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
