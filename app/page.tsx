@@ -10,7 +10,7 @@ export default function HomePage() {
             <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center">
               <span className="text-white font-bold text-sm">M</span>
             </div>
-            <span className="font-display font-semibold text-lg">MiniAppart</span>
+            <span className="font-display font-semibold text-lg">MiniZen</span>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/login" className="btn-ghost">Đăng nhập</Link>
@@ -96,7 +96,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="py-10 px-6 text-center text-sm text-stone-400">
-        <p>&copy; 2024 MiniAppart. Xây dựng với Next.js & Supabase.</p>
+        <p>&copy; 2024 MiniZen. Xây dựng với Next.js & Supabase.</p>
       </footer>
     </div>
   );

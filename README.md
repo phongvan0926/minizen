@@ -1,4 +1,4 @@
-# 🏢 MiniAppart Manager
+# 🏢 MiniZen Manager
 
 Nền tảng quản lý chung cư mini — kết nối Chủ nhà, Môi giới, Công ty và Khách thuê.
 
@@ -65,15 +65,15 @@ Nền tảng quản lý chung cư mini — kết nối Chủ nhà, Môi giới, 
 
 ```bash
 # Clone hoặc copy project
-cd miniappart
+cd minizen
 
 # Init git
 git init
 git add .
-git commit -m "Initial commit - MiniAppart Manager"
+git commit -m "Initial commit - MiniZen Manager"
 
 # Tạo repo trên GitHub (github.com/new)
-git remote add origin https://github.com/YOUR_USERNAME/miniappart.git
+git remote add origin https://github.com/YOUR_USERNAME/minizen.git
 git branch -M main
 git push -u origin main
 ```
@@ -81,7 +81,7 @@ git push -u origin main
 ### Bước 4: Deploy lên Vercel (miễn phí)
 
 1. Vào https://vercel.com → Sign Up bằng GitHub
-2. **Add New → Project** → Import repo `miniappart`
+2. **Add New → Project** → Import repo `minizen`
 3. **Environment Variables** → thêm từng biến:
 
 ```
@@ -92,7 +92,7 @@ NEXTAUTH_URL=https://your-app.vercel.app
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiI...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiI...
-NEXT_PUBLIC_APP_NAME=MiniAppart
+NEXT_PUBLIC_APP_NAME=MiniZen
 NEXT_PUBLIC_APP_URL=https://your-app.vercel.app
 ```
 
@@ -118,9 +118,9 @@ npm run db:seed
 
 1. Vào `https://your-app.vercel.app`
 2. Đăng nhập với tài khoản demo (mật khẩu: `123456`):
-   - Admin: `admin@miniappart.vn`
-   - Môi giới: `broker@miniappart.vn`
-   - Chủ nhà: `landlord@miniappart.vn`
+   - Admin: `admin@minizen.vn`
+   - Môi giới: `broker@minizen.vn`
+   - Chủ nhà: `landlord@minizen.vn`
 
 ---
 
@@ -128,8 +128,8 @@ npm run db:seed
 
 ```bash
 # 1. Clone repo
-git clone https://github.com/YOUR_USERNAME/miniappart.git
-cd miniappart
+git clone https://github.com/YOUR_USERNAME/minizen.git
+cd minizen
 
 # 2. Cài dependencies
 npm install
@@ -150,7 +150,7 @@ npm run dev
 ## 📁 Cấu trúc thư mục
 
 ```
-miniappart/
+minizen/
 ├── app/
 │   ├── admin/           # Admin dashboard pages
 │   ├── broker/          # Broker pages
@@ -189,7 +189,7 @@ miniappart/
 
 | Vai trò | Email | Mật khẩu |
 |---------|-------|-----------|
-| Admin | admin@miniappart.vn | 123456 |
-| Môi giới | broker@miniappart.vn | 123456 |
-| Chủ nhà | landlord@miniappart.vn | 123456 |
-| Khách | customer@miniappart.vn | 123456 |
+| Admin | admin@minizen.vn | 123456 |
+| Môi giới | broker@minizen.vn | 123456 |
+| Chủ nhà | landlord@minizen.vn | 123456 |
+| Khách | customer@minizen.vn | 123456 |

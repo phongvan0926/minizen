@@ -56,7 +56,7 @@ export default function ShareViewPage() {
             <div className="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center">
               <span className="text-white font-bold text-xs">M</span>
             </div>
-            <span className="font-display font-semibold">MiniAppart</span>
+            <span className="font-display font-semibold">MiniZen</span>
           </div>
           <span className="text-xs text-stone-400">Chia sẻ bởi {data.broker?.name}</span>
         </div>
@@ -171,7 +171,7 @@ export default function ShareViewPage() {
         </div>
 
         <p className="text-center text-xs text-stone-400 mt-8 mb-4">
-          Powered by MiniAppart • Link chia sẻ bởi {data.broker?.name}
+          Powered by MiniZen • Link chia sẻ bởi {data.broker?.name}
         </p>
       </div>
     </div>

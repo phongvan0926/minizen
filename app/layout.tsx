@@ -4,7 +4,7 @@ import AuthProvider from '@/components/layout/AuthProvider';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'MiniAppart - Quản lý chung cư mini',
+  title: 'MiniZen - Quản lý chung cư mini',
   description: 'Nền tảng kết nối chủ nhà, môi giới và khách thuê chung cư mini',
 };
 
