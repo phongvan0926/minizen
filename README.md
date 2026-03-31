@@ -185,6 +185,38 @@ minizen/
 | SĐT Chủ nhà | ✅ | ✅ | — | ❌ |
 | Hoa hồng | ✅ | Của mình | ❌ | ❌ |
 
+## Changelog
+
+### v3 — Dashboard upgrade, image upload, gallery, full product forms
+- **Upload ảnh:** Tích hợp Supabase Storage, component `ImageUpload` kéo thả/chọn nhiều ảnh, preview & xóa
+- **Form sản phẩm nâng cao:** `PropertyForm` & `RoomForm` đầy đủ trường (amenities, commissionJson, landlordNotes, images...)
+- **Admin dashboard:**
+  - Trang Properties: form tạo/sửa đầy đủ với upload ảnh, hiển thị ảnh cover trong bảng
+  - Trang Rooms: form nâng cao, carousel ảnh, hiển thị amenities & hoa hồng
+  - Trang Deals: card layout đẹp hơn với ảnh phòng thumbnail, stat cards
+  - Trang Users: UI cải thiện, stat cards, avatar placeholder
+- **Landlord dashboard:**
+  - Properties: form tạo/sửa đầy đủ với upload ảnh, card layout có ảnh cover
+  - Rooms: form đầy đủ amenities/ảnh/hoa hồng, card hiển thị ảnh thật
+- **Broker dashboard:**
+  - Kho hàng: ảnh thật với carousel (prev/next, badge số ảnh), fallback gradient
+  - Deals: card layout với ảnh thumbnail, stat cards (Tổng deal, Chờ duyệt, Hoa hồng)
+  - Share links: ảnh thumbnail, hiển thị giá phòng, nút actions có màu
+- **Trang khách xem phòng (share link):**
+  - Gallery ảnh: ảnh lớn + thumbnails, lightbox toàn màn hình, prev/next navigation
+  - Grid thông tin: diện tích, tầng, tổng tầng
+  - Đặc điểm tòa nhà: grid 2 cột với icon màu (ô tô, EV, pet, foreigner)
+- **API updates:** Include room/property images trong deals & share-links API
+
+### v2 — Landing page redesign
+- Landing page mới với search bar, card layout, rich backgrounds
+
+### v1 — Initial release
+- CRUD tòa nhà, phòng, deal, user
+- 4 vai trò: Admin, Môi giới, Chủ nhà, Khách
+- Share link ẩn thông tin nhạy cảm
+- Hoa hồng tự động
+
 ## Tài khoản Demo
 
 | Vai trò | Email | Mật khẩu |
