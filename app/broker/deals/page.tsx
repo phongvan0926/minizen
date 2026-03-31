@@ -38,22 +38,56 @@ export default function BrokerDealsPage() {
     }
   };
 
-  if (loading) return <div className="animate-pulse text-stone-400 p-8">Đang tải...</div>;
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-[50vh]">
+      <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-600 border-t-transparent" />
+    </div>
+  );
 
   const myCommission = deals
     .filter(d => d.status === 'CONFIRMED' || d.status === 'PAID')
     .reduce((s, d) => s + d.commissionBroker, 0);
+
+  const pendingDeals = deals.filter(d => d.status === 'PENDING').length;
+  const confirmedDeals = deals.filter(d => d.status === 'CONFIRMED' || d.status === 'PAID').length;
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="font-display text-2xl font-bold">Giao dịch của tôi</h1>
-          <p className="text-sm text-stone-500 mt-1">Tổng hoa hồng: <span className="font-bold text-brand-600">{formatCurrency(myCommission)}</span></p>
+          <p className="text-sm text-stone-500 mt-1">
+            {deals.length} deal • Hoa hồng: <span className="font-bold text-brand-600">{formatCurrency(myCommission)}</span>
+          </p>
         </div>
         <button onClick={() => setShowForm(!showForm)} className="btn-primary">
           {showForm ? 'Đóng' : '+ Báo deal mới'}
         </button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="stat-card">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">📊</span>
+            <p className="text-xs font-medium text-stone-500 uppercase">Tổng deal</p>
+          </div>
+          <p className="text-xl font-bold mt-1">{deals.length}</p>
+        </div>
+        <div className="stat-card">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">⏳</span>
+            <p className="text-xs font-medium text-stone-500 uppercase">Chờ duyệt</p>
+          </div>
+          <p className="text-xl font-bold mt-1 text-amber-600">{pendingDeals}</p>
+        </div>
+        <div className="stat-card">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">💰</span>
+            <p className="text-xs font-medium text-stone-500 uppercase">Hoa hồng</p>
+          </div>
+          <p className="text-xl font-bold mt-1 text-brand-600">{formatCurrency(myCommission)}</p>
+        </div>
       </div>
 
       {showForm && (
@@ -102,44 +136,73 @@ export default function BrokerDealsPage() {
         </div>
       )}
 
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-stone-50/80">
-              <tr>
-                <th className="table-header">Phòng</th>
-                <th className="table-header">Khách</th>
-                <th className="table-header">Giá deal</th>
-                <th className="table-header">HH của tôi</th>
-                <th className="table-header">Trạng thái</th>
-                <th className="table-header">Ngày</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-stone-100">
-              {deals.map((d: any) => (
-                <tr key={d.id} className="hover:bg-stone-50/50">
-                  <td className="table-cell">
-                    <p className="font-medium">{d.room?.roomNumber}</p>
-                    <p className="text-xs text-stone-500">{d.room?.property?.name}</p>
-                  </td>
-                  <td className="table-cell">
-                    <p>{d.customerName || '—'}</p>
-                    <p className="text-xs text-stone-500">{d.customerPhone || ''}</p>
-                  </td>
-                  <td className="table-cell font-medium">{formatCurrency(d.dealPrice)}</td>
-                  <td className="table-cell font-bold text-brand-600">{formatCurrency(d.commissionBroker)}</td>
-                  <td className="table-cell">
-                    <span className={`badge ${getStatusColor(d.status)}`}>{getStatusLabel(d.status)}</span>
-                  </td>
-                  <td className="table-cell text-xs text-stone-500">{formatDate(d.dealDate)}</td>
-                </tr>
-              ))}
-              {deals.length === 0 && (
-                <tr><td colSpan={6} className="table-cell text-center text-stone-400 py-12">Chưa có giao dịch nào</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+      {/* Deal cards */}
+      <div className="space-y-3">
+        {deals.map((d: any) => {
+          const roomImages: string[] = d.room?.images || [];
+          const propImages: string[] = d.room?.property?.images || [];
+          const coverImage = roomImages[0] || propImages[0];
+
+          return (
+            <div key={d.id} className="card-hover">
+              <div className="flex gap-4">
+                {/* Room image thumbnail */}
+                <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-brand-100 to-brand-50">
+                  {coverImage ? (
+                    <img src={coverImage} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-2xl">🏢</div>
+                  )}
+                </div>
+
+                {/* Deal info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="font-semibold text-stone-900">
+                        P.{d.room?.roomNumber} — {d.room?.property?.name}
+                      </h3>
+                      <p className="text-xs text-stone-500 mt-0.5">
+                        {d.room?.property?.district} • {formatDate(d.dealDate)}
+                      </p>
+                    </div>
+                    <span className={`badge ${getStatusColor(d.status)} flex-shrink-0`}>
+                      {getStatusLabel(d.status)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-4 mt-2 flex-wrap">
+                    <div>
+                      <p className="text-[10px] text-stone-400 uppercase font-medium">Giá deal</p>
+                      <p className="text-sm font-semibold text-stone-700">{formatCurrency(d.dealPrice)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-stone-400 uppercase font-medium">HH của tôi</p>
+                      <p className="text-sm font-bold text-brand-600">{formatCurrency(d.commissionBroker)}</p>
+                    </div>
+                    {d.customerName && (
+                      <div>
+                        <p className="text-[10px] text-stone-400 uppercase font-medium">Khách</p>
+                        <p className="text-sm text-stone-700">{d.customerName} {d.customerPhone && <span className="text-stone-400">• {d.customerPhone}</span>}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {d.notes && (
+                    <p className="text-xs text-stone-500 mt-1.5 bg-stone-50 px-2 py-1 rounded-lg">📝 {d.notes}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+        {deals.length === 0 && (
+          <div className="text-center py-16 text-stone-400 card">
+            <p className="text-4xl mb-3">📋</p>
+            <p>Chưa có giao dịch nào</p>
+            <button onClick={() => setShowForm(true)} className="btn-primary mt-4 text-sm">+ Báo deal mới</button>
+          </div>
+        )}
       </div>
     </div>
   );

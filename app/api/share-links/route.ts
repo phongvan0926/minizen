@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
     const links = await prisma.shareLink.findMany({
       where,
       include: {
-        room: { include: { property: { select: { name: true, district: true } } } },
+        room: { include: { property: { select: { name: true, district: true, images: true } } } },
         broker: { select: { name: true } },
       },
       orderBy: { createdAt: 'desc' },

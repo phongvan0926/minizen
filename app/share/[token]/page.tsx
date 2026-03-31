@@ -9,6 +9,129 @@ const roomTypeLabels: Record<string, string> = {
   '2k1n': '2 khách 1 ngủ', studio: 'Studio', duplex: 'Duplex',
 };
 
+function ImageGallery({ images }: { images: string[] }) {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [lightbox, setLightbox] = useState(false);
+
+  if (images.length === 0) {
+    return (
+      <div className="h-64 md:h-80 bg-gradient-to-br from-brand-100 via-brand-50 to-blue-50 rounded-2xl flex items-center justify-center">
+        <div className="text-center">
+          <span className="text-5xl">🏢</span>
+          <p className="text-sm text-stone-400 mt-2">Chưa có ảnh</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* Main image */}
+      <div className="relative rounded-2xl overflow-hidden group cursor-pointer" onClick={() => setLightbox(true)}>
+        <img
+          src={images[activeIdx]}
+          alt={`Ảnh phòng ${activeIdx + 1}`}
+          className="w-full h-64 md:h-80 object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+
+        {/* Image counter */}
+        <span className="absolute bottom-3 right-3 bg-black/50 text-white text-xs font-medium px-3 py-1 rounded-full backdrop-blur-sm">
+          {activeIdx + 1} / {images.length}
+        </span>
+
+        {/* Prev/Next on main image */}
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={(e) => { e.stopPropagation(); setActiveIdx(i => (i - 1 + images.length) % images.length); }}
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 text-stone-700 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white shadow-lg text-lg"
+            >
+              ‹
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); setActiveIdx(i => (i + 1) % images.length); }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 text-stone-700 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white shadow-lg text-lg"
+            >
+              ›
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Thumbnails */}
+      {images.length > 1 && (
+        <div className="flex gap-2 mt-3 overflow-x-auto pb-1 scrollbar-thin">
+          {images.map((img, idx) => (
+            <button
+              key={idx}
+              onClick={() => setActiveIdx(idx)}
+              className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border-2 transition-all ${
+                idx === activeIdx
+                  ? 'border-brand-500 shadow-md ring-2 ring-brand-200'
+                  : 'border-transparent opacity-60 hover:opacity-100'
+              }`}
+            >
+              <img src={img} alt="" className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setLightbox(false)}
+        >
+          <button
+            onClick={() => setLightbox(false)}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 text-xl"
+          >
+            ✕
+          </button>
+          <img
+            src={images[activeIdx]}
+            alt=""
+            className="max-w-full max-h-[85vh] object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={(e) => { e.stopPropagation(); setActiveIdx(i => (i - 1 + images.length) % images.length); }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 text-2xl"
+              >
+                ‹
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setActiveIdx(i => (i + 1) % images.length); }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 text-2xl"
+              >
+                ›
+              </button>
+            </>
+          )}
+          {/* Lightbox thumbnails */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 max-w-[90vw] overflow-x-auto pb-1">
+            {images.map((img, idx) => (
+              <button
+                key={idx}
+                onClick={(e) => { e.stopPropagation(); setActiveIdx(idx); }}
+                className={`flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
+                  idx === activeIdx ? 'border-white shadow-lg' : 'border-transparent opacity-50 hover:opacity-80'
+                }`}
+              >
+                <img src={img} alt="" className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function ShareViewPage() {
   const params = useParams();
   const token = params.token as string;
@@ -26,7 +149,10 @@ export default function ShareViewPage() {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-stone-50">
-      <div className="animate-pulse text-stone-400">Đang tải thông tin phòng...</div>
+      <div className="flex flex-col items-center gap-3">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-600 border-t-transparent" />
+        <p className="text-stone-400 text-sm">Đang tải thông tin phòng...</p>
+      </div>
     </div>
   );
 
@@ -44,9 +170,16 @@ export default function ShareViewPage() {
   const room = data.room;
   const property = room?.property;
 
+  const roomImages: string[] = room?.images || [];
+  const propImages: string[] = property?.images || [];
+  const allImages = [...roomImages, ...propImages];
+
   // Build Google Maps direction URL using district + street (no exact address)
   const mapsQuery = encodeURIComponent(`${property?.streetName}, ${property?.district}, ${property?.city || 'Hà Nội'}`);
   const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${mapsQuery}`;
+
+  const hasPropertyFeatures = property?.parkingCar || property?.evCharging || property?.petAllowed || property?.foreignerOk;
+  const hasPropertyAmenities = property?.amenities?.length > 0;
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -63,12 +196,9 @@ export default function ShareViewPage() {
       </nav>
 
       <div className="max-w-3xl mx-auto px-4 py-8">
-        {/* Room hero */}
-        <div className="h-56 md:h-72 bg-gradient-to-br from-brand-100 via-brand-50 to-blue-50 rounded-2xl mb-6 flex items-center justify-center">
-          <div className="text-center">
-            <span className="text-5xl">🏢</span>
-            <p className="text-sm text-stone-400 mt-2">{property?.name}</p>
-          </div>
+        {/* Image Gallery */}
+        <div className="mb-6">
+          <ImageGallery images={allImages} />
         </div>
 
         {/* Room info */}
@@ -78,43 +208,55 @@ export default function ShareViewPage() {
               <h1 className="font-display text-2xl font-bold">{property?.name}</h1>
               <p className="text-stone-500 mt-1">Phòng {room.roomNumber} • Tầng {room.floor}</p>
             </div>
-            <span className="badge bg-emerald-100 text-emerald-700 text-sm py-1">Còn trống</span>
+            <span className="badge bg-emerald-100 text-emerald-700 text-sm py-1 flex-shrink-0">Còn trống</span>
           </div>
 
-          {room.roomType && room.roomType !== 'don' && (
-            <span className="badge bg-brand-100 text-brand-700 mb-3">{roomTypeLabels[room.roomType] || room.roomType}</span>
+          {room.roomType && (
+            <span className="badge bg-brand-100 text-brand-700 mb-3">
+              {roomTypeLabels[room.roomType] || room.roomType}
+            </span>
           )}
 
-          <div className="text-3xl font-bold text-brand-600 mb-4">
+          <div className="text-3xl font-bold text-brand-600 mb-1">
             {formatCurrency(room.priceMonthly)}
             <span className="text-base font-normal text-stone-400">/tháng</span>
           </div>
 
           {room.deposit > 0 && (
-            <p className="text-sm text-stone-500 mb-4">Đặt cọc: {formatCurrency(room.deposit)}</p>
+            <p className="text-sm text-stone-500 mb-4">Đặt cọc: <span className="font-semibold text-stone-700">{formatCurrency(room.deposit)}</span></p>
           )}
 
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="p-3 bg-stone-50 rounded-xl">
-              <p className="text-xs text-stone-500">Diện tích</p>
-              <p className="font-semibold">{room.areaSqm} m²</p>
+          {/* Key specs grid */}
+          <div className="grid grid-cols-3 gap-3 mb-4 mt-4">
+            <div className="p-3 bg-stone-50 rounded-xl text-center">
+              <p className="text-lg font-bold text-stone-800">{room.areaSqm} m²</p>
+              <p className="text-[11px] text-stone-500 mt-0.5">Diện tích</p>
             </div>
-            <div className="p-3 bg-stone-50 rounded-xl">
-              <p className="text-xs text-stone-500">Tầng</p>
-              <p className="font-semibold">Tầng {room.floor}</p>
+            <div className="p-3 bg-stone-50 rounded-xl text-center">
+              <p className="text-lg font-bold text-stone-800">Tầng {room.floor}</p>
+              <p className="text-[11px] text-stone-500 mt-0.5">Vị trí</p>
+            </div>
+            <div className="p-3 bg-stone-50 rounded-xl text-center">
+              <p className="text-lg font-bold text-stone-800">
+                {property?.totalFloors || '—'}
+              </p>
+              <p className="text-[11px] text-stone-500 mt-0.5">Tổng tầng</p>
             </div>
           </div>
 
           {room.description && (
-            <p className="text-sm text-stone-600 leading-relaxed mb-4">{room.description}</p>
+            <div className="p-3 bg-stone-50 rounded-xl mb-4">
+              <p className="text-sm text-stone-600 leading-relaxed">{room.description}</p>
+            </div>
           )}
 
+          {/* Room amenities */}
           {room.amenities?.length > 0 && (
             <div>
-              <p className="text-sm font-medium text-stone-700 mb-2">Tiện ích phòng</p>
+              <p className="text-sm font-semibold text-stone-700 mb-2">Tiện ích phòng</p>
               <div className="flex flex-wrap gap-2">
                 {room.amenities.map((a: string) => (
-                  <span key={a} className="px-3 py-1.5 bg-brand-50 text-brand-700 text-sm rounded-lg border border-brand-100">{a}</span>
+                  <span key={a} className="px-3 py-1.5 bg-brand-50 text-brand-700 text-sm rounded-lg border border-brand-100 font-medium">{a}</span>
                 ))}
               </div>
             </div>
@@ -122,20 +264,48 @@ export default function ShareViewPage() {
         </div>
 
         {/* Building features */}
-        <div className="card mb-4">
-          <h2 className="font-display font-semibold text-lg mb-3">🏢 Tiện ích tòa nhà</h2>
-          <div className="flex flex-wrap gap-2 mb-3">
-            {property?.amenities?.map((a: string) => (
-              <span key={a} className="px-3 py-1.5 bg-stone-100 text-stone-700 text-sm rounded-lg">{a}</span>
-            ))}
+        {(hasPropertyAmenities || hasPropertyFeatures) && (
+          <div className="card mb-4">
+            <h2 className="font-display font-semibold text-lg mb-3">🏢 Tiện ích tòa nhà</h2>
+
+            {hasPropertyAmenities && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {property.amenities.map((a: string) => (
+                  <span key={a} className="px-3 py-1.5 bg-stone-100 text-stone-700 text-sm rounded-lg">{a}</span>
+                ))}
+              </div>
+            )}
+
+            {hasPropertyFeatures && (
+              <div className="grid grid-cols-2 gap-2">
+                {property?.parkingCar && (
+                  <div className="flex items-center gap-2 px-3 py-2.5 bg-blue-50 rounded-xl">
+                    <span className="text-lg">🚗</span>
+                    <span className="text-sm text-blue-700 font-medium">Ô tô đỗ cửa</span>
+                  </div>
+                )}
+                {property?.evCharging && (
+                  <div className="flex items-center gap-2 px-3 py-2.5 bg-green-50 rounded-xl">
+                    <span className="text-lg">⚡</span>
+                    <span className="text-sm text-green-700 font-medium">Sạc xe điện</span>
+                  </div>
+                )}
+                {property?.petAllowed && (
+                  <div className="flex items-center gap-2 px-3 py-2.5 bg-amber-50 rounded-xl">
+                    <span className="text-lg">🐾</span>
+                    <span className="text-sm text-amber-700 font-medium">Nuôi thú cưng</span>
+                  </div>
+                )}
+                {property?.foreignerOk && (
+                  <div className="flex items-center gap-2 px-3 py-2.5 bg-purple-50 rounded-xl">
+                    <span className="text-lg">🌍</span>
+                    <span className="text-sm text-purple-700 font-medium">Cho người nước ngoài</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-          <div className="flex flex-wrap gap-2">
-            {property?.parkingCar && <span className="px-3 py-1.5 bg-blue-50 text-blue-700 text-sm rounded-lg">🚗 Ô tô đỗ cửa</span>}
-            {property?.evCharging && <span className="px-3 py-1.5 bg-green-50 text-green-700 text-sm rounded-lg">⚡ Sạc xe điện</span>}
-            {property?.petAllowed && <span className="px-3 py-1.5 bg-amber-50 text-amber-700 text-sm rounded-lg">🐾 Nuôi thú cưng</span>}
-            {property?.foreignerOk && <span className="px-3 py-1.5 bg-purple-50 text-purple-700 text-sm rounded-lg">🌍 Cho người nước ngoài</span>}
-          </div>
-        </div>
+        )}
 
         {/* Location with DIRECTIONS button */}
         <div className="card mb-4">

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatCurrency } from '@/lib/utils';
 
 export default function BrokerShareLinksPage() {
   const [links, setLinks] = useState<any[]>([]);
@@ -28,58 +28,101 @@ export default function BrokerShareLinksPage() {
     fetchData();
   };
 
-  if (loading) return <div className="animate-pulse text-stone-400 p-8">Đang tải...</div>;
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-[50vh]">
+      <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-600 border-t-transparent" />
+    </div>
+  );
+
+  const totalViews = links.reduce((s: number, l: any) => s + l.viewCount, 0);
+  const activeLinks = links.filter((l: any) => l.isActive).length;
 
   return (
     <div>
       <h1 className="font-display text-2xl font-bold mb-2">Link chia sẻ</h1>
       <p className="text-sm text-stone-500 mb-6">Quản lý các link đã gửi cho khách</p>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="stat-card">
-          <p className="text-xs font-medium text-stone-500 uppercase">Tổng link</p>
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🔗</span>
+            <p className="text-xs font-medium text-stone-500 uppercase">Tổng link</p>
+          </div>
           <p className="text-xl font-bold mt-1">{links.length}</p>
         </div>
         <div className="stat-card">
-          <p className="text-xs font-medium text-stone-500 uppercase">Tổng lượt xem</p>
-          <p className="text-xl font-bold mt-1 text-brand-600">{links.reduce((s: number, l: any) => s + l.viewCount, 0)}</p>
+          <div className="flex items-center gap-2">
+            <span className="text-lg">👁️</span>
+            <p className="text-xs font-medium text-stone-500 uppercase">Tổng lượt xem</p>
+          </div>
+          <p className="text-xl font-bold mt-1 text-brand-600">{totalViews}</p>
         </div>
         <div className="stat-card">
-          <p className="text-xs font-medium text-stone-500 uppercase">Link active</p>
-          <p className="text-xl font-bold mt-1 text-emerald-600">{links.filter((l: any) => l.isActive).length}</p>
+          <div className="flex items-center gap-2">
+            <span className="text-lg">✅</span>
+            <p className="text-xs font-medium text-stone-500 uppercase">Link active</p>
+          </div>
+          <p className="text-xl font-bold mt-1 text-emerald-600">{activeLinks}</p>
         </div>
       </div>
 
       <div className="space-y-3">
-        {links.map((link: any) => (
-          <div key={link.id} className="card-hover flex items-center justify-between gap-4 flex-wrap">
-            <div className="flex-1 min-w-[200px]">
-              <p className="font-medium text-stone-900">
-                {link.room?.roomNumber} — {link.room?.property?.name}
-              </p>
-              <p className="text-xs text-stone-500 mt-0.5">
-                {link.room?.property?.district} • Tạo: {formatDate(link.createdAt)}
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="text-center">
-                <p className="text-lg font-bold text-brand-600">{link.viewCount}</p>
-                <p className="text-xs text-stone-500">lượt xem</p>
+        {links.map((link: any) => {
+          const roomImages: string[] = link.room?.images || [];
+          const propImages: string[] = link.room?.property?.images || [];
+          const coverImage = roomImages[0] || propImages[0];
+
+          return (
+            <div key={link.id} className="card-hover">
+              <div className="flex gap-4 items-center flex-wrap">
+                {/* Room image */}
+                <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-brand-100 to-brand-50">
+                  {coverImage ? (
+                    <img src={coverImage} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-xl">🏢</div>
+                  )}
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-[180px]">
+                  <p className="font-semibold text-stone-900">
+                    P.{link.room?.roomNumber} — {link.room?.property?.name}
+                  </p>
+                  <div className="flex items-center gap-3 mt-0.5">
+                    <span className="text-xs text-stone-500">{link.room?.property?.district}</span>
+                    {link.room?.priceMonthly && (
+                      <span className="text-xs font-semibold text-brand-600">{formatCurrency(link.room.priceMonthly)}</span>
+                    )}
+                    <span className="text-xs text-stone-400">Tạo: {formatDate(link.createdAt)}</span>
+                  </div>
+                </div>
+
+                {/* View count */}
+                <div className="text-center flex-shrink-0">
+                  <p className="text-2xl font-bold text-brand-600">{link.viewCount}</p>
+                  <p className="text-[10px] text-stone-500 uppercase font-medium">lượt xem</p>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2 flex-shrink-0">
+                  <button onClick={() => copyLink(link.token)}
+                    className="px-3 py-2 bg-brand-50 text-brand-700 rounded-lg text-xs font-medium hover:bg-brand-100 transition-colors">
+                    📋 Copy
+                  </button>
+                  <a href={`/share/${link.token}`} target="_blank"
+                    className="px-3 py-2 bg-stone-100 text-stone-700 rounded-lg text-xs font-medium hover:bg-stone-200 transition-colors">
+                    👁️ Xem
+                  </a>
+                  <button onClick={() => deleteLink(link.id)}
+                    className="px-3 py-2 bg-red-50 text-red-600 rounded-lg text-xs font-medium hover:bg-red-100 transition-colors">
+                    🗑️
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => copyLink(link.token)} className="btn-ghost text-xs">
-                  📋 Copy link
-                </button>
-                <a href={`/share/${link.token}`} target="_blank" className="btn-ghost text-xs">
-                  👁️ Xem
-                </a>
-                <button onClick={() => deleteLink(link.id)} className="btn-ghost text-xs text-red-500">
-                  🗑️ Xoá
-                </button>
-              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         {links.length === 0 && (
           <div className="text-center py-16 text-stone-400 card">
             <p className="text-4xl mb-3">🔗</p>

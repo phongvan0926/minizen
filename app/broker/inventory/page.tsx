@@ -19,6 +19,56 @@ function parseCommission(json: string | null): Record<string, number> {
   try { return JSON.parse(json); } catch { return {}; }
 }
 
+function RoomImageCover({ room }: { room: any }) {
+  const roomImages: string[] = room.images || [];
+  const propImages: string[] = room.property?.images || [];
+  const allImages = [...roomImages, ...propImages];
+  const [imgIdx, setImgIdx] = useState(0);
+
+  if (allImages.length === 0) {
+    return (
+      <div className="h-48 bg-gradient-to-br from-brand-100 to-brand-50 rounded-xl flex items-center justify-center relative">
+        <span className="text-4xl">🏢</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-48 rounded-xl overflow-hidden relative group">
+      <img
+        src={allImages[imgIdx]}
+        alt="Ảnh phòng"
+        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+      />
+      {/* Dark gradient overlay at bottom */}
+      <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/50 to-transparent" />
+      {/* Image count badge */}
+      {allImages.length > 1 && (
+        <span className="absolute bottom-2 right-2 bg-black/60 text-white text-[11px] font-medium px-2 py-0.5 rounded-full backdrop-blur-sm">
+          📷 {allImages.length}
+        </span>
+      )}
+      {/* Navigation arrows */}
+      {allImages.length > 1 && (
+        <>
+          <button
+            onClick={(e) => { e.stopPropagation(); setImgIdx(i => (i - 1 + allImages.length) % allImages.length); }}
+            className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60 text-sm"
+          >
+            ‹
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setImgIdx(i => (i + 1) % allImages.length); }}
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60 text-sm"
+          >
+            ›
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function BrokerInventoryPage() {
   const [rooms, setRooms] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
@@ -78,7 +128,11 @@ export default function BrokerInventoryPage() {
     }
   };
 
-  if (loading) return <div className="animate-pulse text-stone-400 p-8">Đang tải...</div>;
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-[50vh]">
+      <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-600 border-t-transparent" />
+    </div>
+  );
 
   return (
     <div>
@@ -88,13 +142,16 @@ export default function BrokerInventoryPage() {
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Tổng deal', value: stats.totalDeals, color: '' },
-            { label: 'Đã chốt', value: stats.confirmedDeals, color: 'text-emerald-600' },
-            { label: 'Hoa hồng', value: formatCurrency(stats.totalCommission), color: 'text-brand-600' },
-            { label: 'Lượt xem', value: stats.totalViews, color: 'text-purple-600' },
+            { label: 'Tổng deal', value: stats.totalDeals, icon: '📊', color: '' },
+            { label: 'Đã chốt', value: stats.confirmedDeals, icon: '✅', color: 'text-emerald-600' },
+            { label: 'Hoa hồng', value: formatCurrency(stats.totalCommission), icon: '💰', color: 'text-brand-600' },
+            { label: 'Lượt xem', value: stats.totalViews, icon: '👁️', color: 'text-purple-600' },
           ].map(s => (
             <div key={s.label} className="stat-card">
-              <p className="text-xs font-medium text-stone-500 uppercase">{s.label}</p>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{s.icon}</span>
+                <p className="text-xs font-medium text-stone-500 uppercase">{s.label}</p>
+              </div>
               <p className={'text-xl font-bold mt-1 ' + s.color}>{s.value}</p>
             </div>
           ))}
@@ -153,7 +210,7 @@ export default function BrokerInventoryPage() {
       </div>
 
       {/* Cards */}
-      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
         {rooms.map((room: any) => {
           const commission = parseCommission(room.commissionJson);
           const hasCommission = Object.keys(commission).length > 0;
@@ -161,20 +218,30 @@ export default function BrokerInventoryPage() {
           const zaloLink = zaloPhone ? 'https://zalo.me/' + zaloPhone.replace(/\s/g, '') : null;
 
           return (
-            <div key={room.id} className="card-hover group">
-              <div className="h-36 bg-gradient-to-br from-brand-100 to-brand-50 rounded-xl mb-3 flex items-center justify-center relative">
-                <span className="text-3xl">🏢</span>
-                {room.roomType && room.roomType !== 'don' && (
-                  <span className="absolute top-2 left-2 badge bg-white/90 text-brand-700 text-xs shadow-sm">
+            <div key={room.id} className="card-hover group overflow-hidden">
+              {/* Image cover with carousel */}
+              <div className="relative -mx-4 -mt-4 mb-3 sm:-mx-5 sm:-mt-5">
+                <RoomImageCover room={room} />
+                {/* Room type badge */}
+                {room.roomType && (
+                  <span className="absolute top-3 left-3 badge bg-white/90 text-brand-700 text-xs shadow-sm font-semibold backdrop-blur-sm">
                     {roomTypeLabels[room.roomType] || room.roomType}
+                  </span>
+                )}
+                {/* Deposit badge */}
+                {room.deposit > 0 && (
+                  <span className="absolute top-3 right-3 badge bg-amber-500/90 text-white text-[10px] shadow-sm backdrop-blur-sm">
+                    Cọc {formatCurrency(room.deposit)}
                   </span>
                 )}
               </div>
 
               <div className="flex items-start justify-between mb-1">
                 <div>
-                  <h3 className="font-semibold text-stone-900">{room.property?.name}</h3>
-                  <p className="text-sm text-stone-500">P.{room.roomNumber} • T{room.floor} • {room.areaSqm}m²</p>
+                  <h3 className="font-semibold text-stone-900 text-[15px]">{room.property?.name}</h3>
+                  <p className="text-sm text-stone-500">
+                    P.{room.roomNumber} • T{room.floor} • {room.areaSqm}m²
+                  </p>
                 </div>
               </div>
 
@@ -184,7 +251,7 @@ export default function BrokerInventoryPage() {
 
               {/* Commission */}
               {hasCommission && (
-                <div className="p-2 bg-emerald-50 rounded-lg mb-2 border border-emerald-100">
+                <div className="p-2.5 bg-emerald-50 rounded-lg mb-2 border border-emerald-100">
                   <p className="text-[10px] font-semibold text-emerald-700 mb-1">💰 HOA HỒNG</p>
                   <div className="flex flex-wrap gap-1.5">
                     {Object.entries(commission).map(([m, p]) => (
@@ -198,7 +265,7 @@ export default function BrokerInventoryPage() {
 
               {/* Landlord notes */}
               {(room.landlordNotes || room.property?.landlordNotes) && (
-                <div className="p-2 bg-amber-50 rounded-lg mb-2 border border-amber-100">
+                <div className="p-2.5 bg-amber-50 rounded-lg mb-2 border border-amber-100">
                   <p className="text-[10px] font-semibold text-amber-700">📝 LƯU Ý CHỦ NHÀ</p>
                   <p className="text-xs text-amber-800 mt-0.5">{room.landlordNotes || room.property?.landlordNotes}</p>
                 </div>
@@ -211,7 +278,7 @@ export default function BrokerInventoryPage() {
 
               {/* Landlord + Zalo */}
               {room.property?.landlord && (
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <span className="text-xs text-stone-600">👤 {room.property.landlord.name}</span>
                   {room.property.landlord.phone && (
                     <a href={'tel:' + room.property.landlord.phone} className="text-xs text-brand-600 hover:underline">
@@ -220,24 +287,27 @@ export default function BrokerInventoryPage() {
                   )}
                   {zaloLink && (
                     <a href={zaloLink} target="_blank" rel="noopener noreferrer"
-                      className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded hover:bg-blue-700">Zalo</a>
+                      className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded hover:bg-blue-700 font-medium">Zalo</a>
                   )}
                 </div>
               )}
 
               {/* Tags */}
               <div className="flex flex-wrap gap-1 mb-2">
-                {room.property?.parkingCar && <span className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded">🚗</span>}
-                {room.property?.evCharging && <span className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded">⚡</span>}
-                {room.property?.petAllowed && <span className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded">🐾</span>}
-                {room.property?.foreignerOk && <span className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded">🌍</span>}
-                {room.amenities?.slice(0, 3).map((a: string) => (
+                {room.property?.parkingCar && <span className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded">🚗 Ô tô</span>}
+                {room.property?.evCharging && <span className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded">⚡ Sạc EV</span>}
+                {room.property?.petAllowed && <span className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded">🐾 Pet</span>}
+                {room.property?.foreignerOk && <span className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded">🌍 Foreigner</span>}
+                {room.amenities?.slice(0, 4).map((a: string) => (
                   <span key={a} className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded">{a}</span>
                 ))}
+                {room.amenities?.length > 4 && (
+                  <span className="text-[10px] bg-stone-100 text-stone-500 px-1.5 py-0.5 rounded">+{room.amenities.length - 4}</span>
+                )}
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2 pt-2 border-t border-stone-100">
+              <div className="flex gap-2 pt-3 border-t border-stone-100">
                 <button onClick={() => createShareLink(room.id)}
                   className={'flex-1 text-xs py-2 rounded-lg font-medium transition-all ' +
                     (copiedLink === room.id ? 'bg-emerald-100 text-emerald-700' : 'bg-brand-50 text-brand-700 hover:bg-brand-100')}>
