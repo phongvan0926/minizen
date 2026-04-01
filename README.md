@@ -187,6 +187,38 @@ minizen/
 
 ## Changelog
 
+### v4 — Đăng nhập OAuth (Google, Facebook, Apple) + Quản lý User nâng cao
+- **OAuth login/register:** Thêm đăng nhập/đăng ký nhanh bằng Google, Facebook, Apple
+  - OAuth là **tuỳ chọn** — app vẫn chạy bình thường bằng email/password nếu không cấu hình
+  - Tự động liên kết tài khoản nếu email đã tồn tại trong hệ thống
+  - User mới đăng nhập OAuth lần đầu → redirect trang chọn vai trò (`/auth/callback`)
+- **Quản lý User (Admin):** CRUD đầy đủ với modal thêm/sửa, xoá (soft/hard delete), search, filter, sort, stats
+
+### Cấu hình OAuth (tuỳ chọn)
+
+**Google:** Vào [Google Cloud Console](https://console.cloud.google.com/apis/credentials) → Create OAuth 2.0 Client ID → Web application → thêm Authorized redirect URI: `https://your-domain.com/api/auth/callback/google`
+
+**Facebook:** Vào [Facebook Developers](https://developers.facebook.com/apps) → New App → Facebook Login → Settings → thêm Valid OAuth Redirect URI: `https://your-domain.com/api/auth/callback/facebook`
+
+**Apple:** Vào [Apple Developer](https://developer.apple.com/account/resources/identifiers) → Identifiers → Services ID → tạo Private Key → thêm Return URL: `https://your-domain.com/api/auth/callback/apple`
+
+Sau khi có credentials, thêm vào `.env` hoặc Vercel Environment Variables:
+```
+GOOGLE_CLIENT_ID=your-client-id
+GOOGLE_CLIENT_SECRET=your-client-secret
+NEXT_PUBLIC_GOOGLE_ENABLED=true
+
+FACEBOOK_CLIENT_ID=your-app-id
+FACEBOOK_CLIENT_SECRET=your-app-secret
+NEXT_PUBLIC_FACEBOOK_ENABLED=true
+
+APPLE_ID=your-services-id
+APPLE_SECRET=your-private-key
+NEXT_PUBLIC_APPLE_ENABLED=true
+```
+
+> Nếu không thêm các biến này, nút OAuth sẽ không hiển thị trên trang login/register.
+
 ### v3 — Dashboard upgrade, image upload, gallery, full product forms
 - **Upload ảnh:** Tích hợp Supabase Storage, component `ImageUpload` kéo thả/chọn nhiều ảnh, preview & xóa
 - **Form sản phẩm nâng cao:** `PropertyForm` & `RoomForm` đầy đủ trường (amenities, commissionJson, landlordNotes, images...)
