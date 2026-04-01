@@ -36,6 +36,7 @@ model User {
   phone         String?
   password      String?   // Nullable: OAuth users have no password
   role          Role      @default(CUSTOMER)
+  setupComplete Boolean   @default(false) // true sau khi user chọn role (OAuth) hoặc đăng ký thủ công
   avatar        String?
   isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now())

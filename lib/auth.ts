@@ -39,7 +39,6 @@ const providers: any[] = [
   }),
 ];
 
-// OAuth providers — only added if env vars are configured
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   providers.push(
     GoogleProvider({
@@ -74,38 +73,31 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
   providers,
   callbacks: {
-    async signIn({ user, account }) {
-      // For OAuth: detect new account (first sign-in with this provider)
-      if (account?.type === 'oauth' && account.provider && account.providerAccountId) {
-        const existingAccount = await prisma.account.findUnique({
-          where: {
-            provider_providerAccountId: {
-              provider: account.provider,
-              providerAccountId: account.providerAccountId,
-            },
-          },
-        });
-        if (!existingAccount) {
-          // First OAuth sign-in — flag for role setup
-          (user as any).needsRoleSetup = true;
-        }
-      }
-      return true;
-    },
     async jwt({ token, user, account, trigger, session }) {
-      // Handle session update (e.g. after user selects role)
+      // Handle manual session update (after user selects role)
       if (trigger === 'update' && session) {
         if (session.role) token.role = session.role;
         if (session.needsRoleSetup !== undefined) token.needsRoleSetup = session.needsRoleSetup;
+        return token;
       }
+
       if (user) {
-        // Fetch fresh from DB to get role (PrismaAdapter user may lack custom fields)
+        // Fetch fresh user from DB (adapter user may lack custom fields)
         const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
-        token.role = dbUser?.role ?? 'CUSTOMER';
-        token.id = user.id;
-        token.phone = dbUser?.phone ?? undefined;
-        if ((user as any).needsRoleSetup) token.needsRoleSetup = true;
+        if (!dbUser) return token;
+
+        token.id = dbUser.id;
+        token.role = dbUser.role;
+        token.phone = dbUser.phone ?? undefined;
+
+        // OAuth user who hasn't completed role setup yet
+        if (account?.type === 'oauth' && !dbUser.password && !dbUser.setupComplete) {
+          token.needsRoleSetup = true;
+        } else {
+          token.needsRoleSetup = false;
+        }
       }
+
       return token;
     },
     async session({ session, token }) {

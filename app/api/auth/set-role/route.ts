@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   }
 
   const userId = (session.user as any).id;
-  await prisma.user.update({ where: { id: userId }, data: { role } });
+  await prisma.user.update({ where: { id: userId }, data: { role, setupComplete: true } });
 
   return NextResponse.json({ ok: true, role });
 }
