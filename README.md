@@ -192,7 +192,10 @@ minizen/
   - OAuth là **tuỳ chọn** — app vẫn chạy bình thường bằng email/password nếu không cấu hình
   - Tự động liên kết tài khoản nếu email đã tồn tại trong hệ thống
   - User mới đăng nhập OAuth lần đầu → redirect trang chọn vai trò (`/auth/callback`)
+  - Dùng field `setupComplete` để phân biệt user mới chưa chọn role vs user đã có role
 - **Quản lý User (Admin):** CRUD đầy đủ với modal thêm/sửa, xoá (soft/hard delete), search, filter, sort, stats
+- **Schema changes:** User.password nullable, thêm Account/Session/VerificationToken, thêm `setupComplete`
+- **Sau khi pull code v4:** bắt buộc chạy `npx prisma db push` để sync schema mới lên database
 
 ### Cấu hình OAuth (tuỳ chọn)
 
