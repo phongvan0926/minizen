@@ -131,27 +131,27 @@ export default function BrokerInventoryPage() {
     });
   };
 
-  const createShareLink = async (roomId: string) => {
+  const createShareLink = async (roomTypeId: string) => {
     const res = await fetch('/api/share-links', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ roomId }),
+      body: JSON.stringify({ roomTypeId }),
     });
     const data = await res.json();
     if (res.ok) {
       await navigator.clipboard.writeText(data.url);
-      setCopiedLink(roomId);
+      setCopiedLink(roomTypeId);
       toast.success('Đã tạo & copy link!');
       setTimeout(() => setCopiedLink(''), 3000);
     }
   };
 
-  const sendInquiry = async (roomId: string) => {
+  const sendInquiry = async (roomTypeId: string) => {
     const res = await fetch('/api/inquiries', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ roomId, message: 'Còn phòng không?' }),
+      body: JSON.stringify({ roomTypeId, message: 'Còn phòng không?' }),
     });
     if (res.ok) {
-      setInquirySent(prev => new Set(prev).add(roomId));
+      setInquirySent(prev => new Set(prev).add(roomTypeId));
       toast.success('Đã gửi hỏi chủ nhà!');
     }
   };

@@ -166,6 +166,16 @@ export default function ShareViewPage() {
   );
 
   const roomType = data.roomType;
+  if (!roomType) return (
+    <div className="min-h-screen flex items-center justify-center bg-stone-50 px-4">
+      <div className="text-center">
+        <p className="text-5xl mb-4">😔</p>
+        <h1 className="font-display text-2xl font-bold mb-2">Không tìm thấy phòng</h1>
+        <p className="text-stone-500 mb-6">Loại phòng đã bị xoá hoặc link không hợp lệ</p>
+        <Link href="/" className="btn-primary">Về trang chủ</Link>
+      </div>
+    </div>
+  );
   const property = roomType?.property;
 
   const roomImages: string[] = roomType?.images || [];

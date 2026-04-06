@@ -9,7 +9,7 @@ export default function BrokerDealsPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
-    roomId: '', dealPrice: '', commissionTotal: '', customerName: '', customerPhone: '', notes: '',
+    roomTypeId: '', dealPrice: '', commissionTotal: '', customerName: '', customerPhone: '', notes: '',
   });
 
   const fetchData = async () => {
@@ -33,7 +33,7 @@ export default function BrokerDealsPage() {
     if (res.ok) {
       toast.success('Đã gửi deal! Chờ Admin xác nhận.');
       setShowForm(false);
-      setForm({ roomId: '', dealPrice: '', commissionTotal: '', customerName: '', customerPhone: '', notes: '' });
+      setForm({ roomTypeId: '', dealPrice: '', commissionTotal: '', customerName: '', customerPhone: '', notes: '' });
       fetchData();
     }
   };
@@ -96,10 +96,10 @@ export default function BrokerDealsPage() {
           <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">Phòng *</label>
-              <select className="input-field" required value={form.roomId} onChange={e => setForm({ ...form, roomId: e.target.value })}>
+              <select className="input-field" required value={form.roomTypeId} onChange={e => setForm({ ...form, roomTypeId: e.target.value })}>
                 <option value="">Chọn phòng</option>
                 {rooms.map((r: any) => (
-                  <option key={r.id} value={r.id}>{r.roomNumber} - {r.property?.name} ({formatCurrency(r.priceMonthly)})</option>
+                  <option key={r.id} value={r.id}>{r.name} - {r.property?.name} ({formatCurrency(r.priceMonthly)})</option>
                 ))}
               </select>
             </div>
@@ -139,8 +139,8 @@ export default function BrokerDealsPage() {
       {/* Deal cards */}
       <div className="space-y-3">
         {deals.map((d: any) => {
-          const roomImages: string[] = d.room?.images || [];
-          const propImages: string[] = d.room?.property?.images || [];
+          const roomImages: string[] = d.roomType?.images || [];
+          const propImages: string[] = d.roomType?.property?.images || [];
           const coverImage = roomImages[0] || propImages[0];
 
           return (
@@ -160,10 +160,10 @@ export default function BrokerDealsPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h3 className="font-semibold text-stone-900">
-                        P.{d.room?.roomNumber} — {d.room?.property?.name}
+                        {d.roomType?.name} — {d.roomType?.property?.name}
                       </h3>
                       <p className="text-xs text-stone-500 mt-0.5">
-                        {d.room?.property?.district} • {formatDate(d.dealDate)}
+                        {d.roomType?.property?.district} • {formatDate(d.dealDate)}
                       </p>
                     </div>
                     <span className={`badge ${getStatusColor(d.status)} flex-shrink-0`}>
