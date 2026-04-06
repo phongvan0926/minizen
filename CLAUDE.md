@@ -12,23 +12,26 @@ Kết nối 4 vai trò: Admin (Công ty), Môi giới, Chủ nhà, Khách thuê.
 
 ## Cấu trúc quan trọng
 ```
-app/admin/          → Trang quản trị (properties, rooms, deals, users, settings)
+app/admin/          → Trang quản trị (companies, properties, rooms, deals, users, settings)
 app/broker/         → Trang môi giới (inventory, deals, share-links)
 app/landlord/       → Trang chủ nhà (properties, rooms)
 app/share/[token]/  → Trang khách xem phòng (public, ẩn địa chỉ + SĐT)
-app/api/            → API routes (properties, rooms, deals, share-links, inquiries, notifications, users, settings)
+app/auth/callback/  → Trang chọn vai trò sau OAuth login lần đầu
+app/api/            → API routes (companies, properties, rooms, deals, share-links, inquiries, notifications, users, settings)
 components/layout/  → DashboardLayout.tsx (sidebar + topbar), AuthProvider.tsx
 lib/auth.ts         → NextAuth config
 lib/prisma.ts       → Prisma client singleton
 lib/utils.ts        → Helpers: formatCurrency, formatDate, getStatusColor...
-prisma/schema.prisma → 8 bảng: users, properties, rooms, deals, share_links, room_inquiries, notifications, settings
+prisma/schema.prisma → 12 bảng: users, accounts, sessions, companies, properties, rooms, deals, share_links, room_inquiries, notifications, settings, verification_tokens
 prisma/seed.ts      → Demo data (password: 123456)
 middleware.ts       → Route protection theo role
 ```
 
 ## Database schema tóm tắt
-- users: id, name, email, phone, password, role (ADMIN/BROKER/LANDLORD/CUSTOMER), isActive
-- properties: id, landlordId, name, fullAddress, district, streetName, zaloPhone, landlordNotes, parkingCar, evCharging, petAllowed, foreignerOk, status (PENDING/APPROVED/REJECTED)
+- companies: id, name, description, phone, email, address, logo, isActive
+- users: id, name, email, phone, password, role (ADMIN/BROKER/LANDLORD/CUSTOMER), isActive, setupComplete
+- accounts: id, userId, type, provider, providerAccountId (OAuth accounts)
+- properties: id, companyId?, landlordId, name, fullAddress, district, streetName, zaloPhone, landlordNotes, parkingCar, evCharging, petAllowed, foreignerOk, status (PENDING/APPROVED/REJECTED)
 - rooms: id, propertyId, roomNumber, floor, areaSqm, priceMonthly, deposit, roomType (don/gac_xep/1k1n/2k1n/studio/duplex), commissionJson, landlordNotes, isAvailable, isApproved, amenities[]
 - deals: id, roomId, brokerId, dealPrice, commissionTotal, commissionBroker, commissionCompany, status (PENDING/CONFIRMED/PAID/CANCELLED)
 - share_links: id, roomId, brokerId, token (unique), viewCount

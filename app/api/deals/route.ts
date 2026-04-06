@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     const deals = await prisma.deal.findMany({
       where,
       include: {
-        room: { include: { property: { select: { name: true, district: true, images: true } } } },
+        room: { include: { property: { select: { name: true, district: true, images: true, companyId: true } } } },
         broker: { select: { id: true, name: true, phone: true, email: true } },
         customer: { select: { id: true, name: true, phone: true } },
       },

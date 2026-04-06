@@ -187,6 +187,17 @@ minizen/
 
 ## Changelog
 
+### v5 — Hệ thống Công ty quản lý đa cấp + Bộ lọc nâng cao
+- **Model Company:** Thêm entity Công ty — mỗi công ty quản lý nhiều tòa nhà, mỗi tòa nhà có nhiều căn hộ
+- **Trang admin/companies:** CRUD công ty (tên, mô tả, SĐT, email, địa chỉ, trạng thái)
+- **Bộ lọc đa cấp:** Tất cả trang admin đều có filter theo Công ty → Chủ nhà → Tòa nhà → Phòng
+  - Properties: filter Công ty + Chủ nhà + Trạng thái
+  - Rooms: filter Công ty + Tòa nhà + Loại phòng (cascade: chọn Công ty → chỉ hiện tòa nhà thuộc Công ty đó)
+  - Deals: filter Công ty + Trạng thái
+- **PropertyForm:** Thêm dropdown chọn Công ty khi Admin tạo/sửa tòa nhà
+- **Sidebar:** Thêm link "Công ty" cho Admin
+- **Sau khi pull code v5:** bắt buộc chạy `npx prisma db push`
+
 ### v4 — Đăng nhập OAuth (Google, Facebook, Apple) + Quản lý User nâng cao
 - **OAuth login/register:** Thêm đăng nhập/đăng ký nhanh bằng Google, Facebook, Apple
   - OAuth là **tuỳ chọn** — app vẫn chạy bình thường bằng email/password nếu không cấu hình

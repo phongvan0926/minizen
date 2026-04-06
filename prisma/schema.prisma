@@ -93,8 +93,26 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
+model Company {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  phone       String?
+  email       String?
+  address     String?
+  logo        String?
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  properties  Property[]
+
+  @@map("companies")
+}
+
 model Property {
   id            String         @id @default(cuid())
+  companyId     String?
   landlordId    String
   name          String
   description   String?
@@ -122,6 +140,7 @@ model Property {
   updatedAt     DateTime       @updatedAt
 
   // Relations
+  company       Company?       @relation(fields: [companyId], references: [id])
   landlord      User           @relation("LandlordProperties", fields: [landlordId], references: [id])
   rooms         Room[]
 

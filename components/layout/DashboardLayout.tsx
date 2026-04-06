@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 const menuItems: Record<string, { label: string; href: string; icon: string }[]> = {
   ADMIN: [
     { label: 'Tổng quan', href: '/admin/properties', icon: '📊' },
+    { label: 'Công ty', href: '/admin/companies', icon: '🏛️' },
     { label: 'Tòa nhà', href: '/admin/properties', icon: '🏢' },
     { label: 'Phòng', href: '/admin/rooms', icon: '🚪' },
     { label: 'Giao dịch', href: '/admin/deals', icon: '💰' },

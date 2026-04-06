@@ -28,6 +28,9 @@ export async function GET(req: NextRequest) {
       ];
     }
 
+    const companyId = url.searchParams.get('companyId');
+    if (companyId) where.companyId = companyId;
+
     const properties = await prisma.property.findMany({
       where,
       include: {
@@ -54,6 +57,7 @@ export async function POST(req: NextRequest) {
     const property = await prisma.property.create({
       data: {
         landlordId,
+        companyId: body.companyId || null,
         name: body.name,
         description: body.description,
         fullAddress: body.fullAddress,
@@ -99,6 +103,7 @@ export async function PUT(req: NextRequest) {
     const property = await prisma.property.update({
       where: { id },
       data: {
+        ...(data.companyId !== undefined && { companyId: data.companyId || null }),
         ...(data.name && { name: data.name }),
         ...(data.description !== undefined && { description: data.description }),
         ...(data.fullAddress && { fullAddress: data.fullAddress }),

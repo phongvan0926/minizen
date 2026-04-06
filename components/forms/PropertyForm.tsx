@@ -30,6 +30,7 @@ interface PropertyFormProps {
   onSubmit: (data: any) => void;
   isAdmin?: boolean;
   loading?: boolean;
+  companies?: { id: string; name: string }[];
 }
 
 const AMENITY_OPTIONS = [
@@ -67,8 +68,9 @@ const defaultData: PropertyData = {
   status: 'PENDING',
 };
 
-export default function PropertyForm({ initialData, onSubmit, isAdmin = false, loading = false }: PropertyFormProps) {
+export default function PropertyForm({ initialData, onSubmit, isAdmin = false, loading = false, companies = [] }: PropertyFormProps) {
   const [form, setForm] = useState<PropertyData>(defaultData);
+  const [companyId, setCompanyId] = useState<string>(initialData?.companyId || '');
   const isEdit = !!initialData?.id;
 
   useEffect(() => {
@@ -120,7 +122,7 @@ export default function PropertyForm({ initialData, onSubmit, isAdmin = false, l
     if (!form.district.trim()) return toast.error('Vui lòng nhập quận/huyện');
     if (!form.streetName.trim()) return toast.error('Vui lòng nhập tên đường');
 
-    onSubmit(form);
+    onSubmit({ ...form, companyId: companyId || null });
   };
 
   return (
@@ -129,6 +131,16 @@ export default function PropertyForm({ initialData, onSubmit, isAdmin = false, l
       <div className="card">
         <h3 className="text-lg font-semibold text-stone-900 mb-4">Thông tin cơ bản</h3>
         <div className="grid md:grid-cols-2 gap-4">
+          {/* Company selector (only for admin with companies) */}
+          {isAdmin && companies.length > 0 && (
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-stone-700 mb-1.5">Thuộc công ty</label>
+              <select className="input-field" value={companyId} onChange={e => setCompanyId(e.target.value)}>
+                <option value="">— Không thuộc công ty nào —</option>
+                {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+          )}
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-stone-700 mb-1.5">
               Tên tòa nhà <span className="text-red-500">*</span>
