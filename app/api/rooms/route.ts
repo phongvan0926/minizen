@@ -100,6 +100,7 @@ export async function GET(req: NextRequest) {
           amenities: true,
           images: true,
           videos: true,
+          videoLinks: true,
           totalUnits: true,
           availableUnits: true,
           availableRoomNames: true,
@@ -191,6 +192,7 @@ export async function POST(req: NextRequest) {
         amenities: body.amenities || [],
         images: body.images || [],
         videos: body.videos || [],
+        videoLinks: body.videoLinks || [],
         totalUnits: parseInt(body.totalUnits) || 1,
         availableUnits: Number.isFinite(parseInt(body.availableUnits))
           ? parseInt(body.availableUnits)
@@ -241,6 +243,7 @@ export async function PUT(req: NextRequest) {
         ...(data.amenities && { amenities: data.amenities }),
         ...(data.images !== undefined && { images: data.images }),
         ...(data.videos !== undefined && { videos: data.videos }),
+        ...(data.videoLinks !== undefined && { videoLinks: data.videoLinks }),
         ...(data.totalUnits !== undefined && { totalUnits: parseInt(data.totalUnits) }),
         ...(data.availableUnits !== undefined && { availableUnits: parseInt(data.availableUnits) }),
         ...(data.availableRoomNames !== undefined && { availableRoomNames: data.availableRoomNames }),

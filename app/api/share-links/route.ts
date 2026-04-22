@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
             select: {
               id: true, name: true, typeName: true, areaSqm: true,
               priceMonthly: true, deposit: true, description: true,
-              amenities: true, images: true, videos: true,
+              amenities: true, images: true, videos: true, videoLinks: true,
               totalUnits: true, availableUnits: true, availableRoomNames: true,
               shortTermAllowed: true, shortTermMonths: true, shortTermPrice: true,
             },

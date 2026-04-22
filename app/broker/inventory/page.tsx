@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { formatCurrency } from '@/lib/utils';
 import Pagination from '@/components/ui/Pagination';
 import OptimizedImage from '@/components/ui/OptimizedImage';
+import VideoGallery from '@/components/ui/VideoGallery';
 import { useRoomTypes, useCompanies, useDashboardStats } from '@/hooks/useData';
 import { SkeletonStats, SkeletonCardGrid } from '@/components/ui/Skeleton';
 
@@ -95,14 +96,11 @@ function RoomDetailModal({
   copied: boolean;
   asked: boolean;
 }) {
-  const [tab, setTab] = useState<'image' | 'video'>('image');
-  const [imgIdx, setImgIdx] = useState(0);
-  const [lightbox, setLightbox] = useState(false);
-
   const roomImages: string[] = room.images || [];
   const propImages: string[] = room.property?.images || [];
   const allImages = [...roomImages, ...propImages];
   const videos: string[] = room.videos || [];
+  const videoLinks: string[] = room.videoLinks || [];
 
   const commission = parseCommission(room.commissionJson);
   const hasCommission = Object.keys(commission).length > 0;
@@ -124,72 +122,9 @@ function RoomDetailModal({
         </button>
 
         {/* Media */}
-        {(allImages.length > 0 || videos.length > 0) ? (
-          <div className="relative bg-stone-100">
-            {videos.length > 0 && (
-              <div className="absolute top-3 left-3 z-10 flex gap-2">
-                <button onClick={() => setTab('image')}
-                  className={'px-3 py-1.5 rounded-lg text-xs font-medium transition-all ' +
-                    (tab === 'image' ? 'bg-brand-600 text-white' : 'bg-white/90 text-stone-700 hover:bg-white')}>
-                  📷 Ảnh ({allImages.length})
-                </button>
-                <button onClick={() => setTab('video')}
-                  className={'px-3 py-1.5 rounded-lg text-xs font-medium transition-all ' +
-                    (tab === 'video' ? 'bg-brand-600 text-white' : 'bg-white/90 text-stone-700 hover:bg-white')}>
-                  🎬 Video ({videos.length})
-                </button>
-              </div>
-            )}
-
-            {tab === 'image' && allImages.length > 0 && (
-              <div className="h-64 sm:h-80 overflow-hidden relative cursor-pointer"
-                onClick={() => setLightbox(true)}>
-                <OptimizedImage src={allImages[imgIdx]} alt="Ảnh phòng" fill
-                  className="object-cover" sizes="(max-width: 640px) 100vw, 640px" priority />
-                {allImages.length > 1 && (
-                  <>
-                    <button onClick={(e) => { e.stopPropagation(); setImgIdx(i => (i - 1 + allImages.length) % allImages.length); }}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 text-white hover:bg-black/70 flex items-center justify-center">‹</button>
-                    <button onClick={(e) => { e.stopPropagation(); setImgIdx(i => (i + 1) % allImages.length); }}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 text-white hover:bg-black/70 flex items-center justify-center">›</button>
-                    <span className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2.5 py-1 rounded-full">
-                      {imgIdx + 1} / {allImages.length}
-                    </span>
-                  </>
-                )}
-              </div>
-            )}
-
-            {tab === 'video' && videos.length > 0 && (
-              <div className="bg-black">
-                <video key={videos[0]} src={videos[0]} className="w-full max-h-80 object-contain"
-                  controls autoPlay muted playsInline preload="metadata" />
-              </div>
-            )}
-          </div>
-        ) : null}
-
-        {/* Lightbox */}
-        {lightbox && allImages.length > 0 && (
-          <div className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4"
-            onClick={() => setLightbox(false)}>
-            <button onClick={() => setLightbox(false)}
-              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 text-xl">
-              ✕
-            </button>
-            <img src={allImages[imgIdx]} alt="" className="max-w-full max-h-[85vh] object-contain rounded-lg"
-              onClick={(e) => e.stopPropagation()} />
-            {allImages.length > 1 && (
-              <>
-                <button onClick={(e) => { e.stopPropagation(); setImgIdx(i => (i - 1 + allImages.length) % allImages.length); }}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 text-2xl">‹</button>
-                <button onClick={(e) => { e.stopPropagation(); setImgIdx(i => (i + 1) % allImages.length); }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 text-2xl">›</button>
-              </>
-            )}
-            <span className="absolute top-4 left-1/2 -translate-x-1/2 text-white/80 text-sm">
-              {imgIdx + 1} / {allImages.length}
-            </span>
+        {(allImages.length > 0 || videos.length > 0 || videoLinks.length > 0) && (
+          <div className="p-4 sm:p-5 pb-0">
+            <VideoGallery images={allImages} videos={videos} videoLinks={videoLinks} />
           </div>
         )}
 

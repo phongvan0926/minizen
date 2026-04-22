@@ -42,6 +42,8 @@ export async function GET(req: NextRequest) {
           deposit: true,
           amenities: true,
           images: true,
+          videos: true,
+          videoLinks: true,
           availableUnits: true,
           shortTermAllowed: true,
           property: {
@@ -80,6 +82,7 @@ export async function GET(req: NextRequest) {
 
     const withShareToken = roomTypes.map(rt => {
       const images = [...(rt.images || []), ...(rt.property?.images || [])].slice(0, 3);
+      const hasVideo = (rt.videos?.length || 0) + (rt.videoLinks?.length || 0) > 0;
       return {
         id: rt.id,
         name: rt.name,
@@ -89,6 +92,8 @@ export async function GET(req: NextRequest) {
         deposit: rt.deposit,
         amenities: rt.amenities,
         images,
+        hasVideo,
+        videoLinks: rt.videoLinks || [],
         availableUnits: rt.availableUnits,
         shortTermAllowed: rt.shortTermAllowed,
         property: rt.property,

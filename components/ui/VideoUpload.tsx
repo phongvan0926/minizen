@@ -18,15 +18,29 @@ export default function VideoUpload({ videos, onChange, maxVideos = 3, folder }:
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const uploadOne = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('folder', folder);
-      formData.append('kind', 'video');
+  const uploadOne = async (file: File): Promise<string> => {
+    const signedRes = await fetch('/api/upload/signed-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filename: file.name,
+        contentType: file.type,
+        folder,
+      }),
+    });
 
+    if (!signedRes.ok) {
+      const err = await signedRes.json().catch(() => ({}));
+      throw new Error(err.error || 'Không lấy được signed URL');
+    }
+
+    const { signedUrl, publicUrl } = await signedRes.json();
+
+    return new Promise<string>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
-      xhr.open('POST', '/api/upload');
+      xhr.open('PUT', signedUrl);
+      xhr.setRequestHeader('Content-Type', file.type);
+      xhr.setRequestHeader('x-upsert', 'false');
 
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) {
@@ -35,16 +49,19 @@ export default function VideoUpload({ videos, onChange, maxVideos = 3, folder }:
       };
 
       xhr.onload = () => {
-        try {
-          const data = JSON.parse(xhr.responseText);
-          if (xhr.status >= 200 && xhr.status < 300 && data.url) resolve(data.url);
-          else reject(new Error(data.error || 'Upload thất bại'));
-        } catch {
-          reject(new Error('Upload thất bại'));
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(publicUrl);
+        } else {
+          let msg = `Upload thất bại (${xhr.status})`;
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (data?.message || data?.error) msg = data.message || data.error;
+          } catch {}
+          reject(new Error(msg));
         }
       };
-      xhr.onerror = () => reject(new Error('Lỗi mạng'));
-      xhr.send(formData);
+      xhr.onerror = () => reject(new Error('Lỗi mạng khi upload'));
+      xhr.send(file);
     });
   };
 

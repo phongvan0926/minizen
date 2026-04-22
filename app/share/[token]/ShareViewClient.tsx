@@ -4,180 +4,12 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { formatCurrency } from '@/lib/utils';
 import OptimizedImage from '@/components/ui/OptimizedImage';
+import VideoGallery from '@/components/ui/VideoGallery';
 
 const roomTypeLabels: Record<string, string> = {
   don: 'Phòng đơn', gac_xep: 'Gác xép', '1k1n': '1 khách 1 ngủ',
   '2k1n': '2 khách 1 ngủ', studio: 'Studio', duplex: 'Duplex',
 };
-
-// ==================== Image Gallery ====================
-function ImageGallery({ images }: { images: string[] }) {
-  const [activeIdx, setActiveIdx] = useState(0);
-  const [lightbox, setLightbox] = useState(false);
-
-  if (images.length === 0) {
-    return (
-      <div className="h-64 md:h-80 bg-gradient-to-br from-brand-100 via-brand-50 to-blue-50 rounded-2xl flex items-center justify-center">
-        <div className="text-center">
-          <span className="text-5xl">🏢</span>
-          <p className="text-sm text-stone-400 mt-2">Chưa có ảnh</p>
-        </div>
-      </div>
-    );
-  }
-
-  const mainImages = images.slice(0, 3);
-
-  return (
-    <>
-      <div className="relative cursor-pointer" onClick={() => setLightbox(true)}>
-        {mainImages.length === 1 && (
-          <div className="rounded-2xl overflow-hidden relative h-64 md:h-80">
-            <OptimizedImage src={mainImages[0]} alt="Ảnh phòng" fill className="object-cover hover:scale-[1.02] transition-transform duration-300" sizes="100vw" priority />
-          </div>
-        )}
-        {mainImages.length === 2 && (
-          <div className="grid grid-cols-2 gap-2 rounded-2xl overflow-hidden">
-            {mainImages.map((img, i) => (
-              <div key={i} className="relative h-64 md:h-80">
-                <OptimizedImage src={img} alt={`Ảnh ${i + 1}`} fill className="object-cover hover:scale-[1.02] transition-transform duration-300" sizes="50vw" />
-              </div>
-            ))}
-          </div>
-        )}
-        {mainImages.length >= 3 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 rounded-2xl overflow-hidden">
-            <div className="col-span-2 row-span-2 relative h-48 sm:h-64 md:h-80">
-              <OptimizedImage src={mainImages[0]} alt="Ảnh 1" fill className="object-cover hover:scale-[1.02] transition-transform duration-300" sizes="66vw" priority />
-            </div>
-            <div className="flex flex-row sm:flex-col gap-2">
-              <div className="relative flex-1 sm:h-[calc(50%-4px)] md:h-[calc(160px-4px)]">
-                <OptimizedImage src={mainImages[1]} alt="Ảnh 2" fill className="object-cover hover:scale-[1.02] transition-transform duration-300" sizes="33vw" />
-              </div>
-              <div className="relative flex-1 sm:h-[calc(50%-4px)] md:h-[calc(160px-4px)]">
-                <OptimizedImage src={mainImages[2]} alt="Ảnh 3" fill className="object-cover hover:scale-[1.02] transition-transform duration-300" sizes="33vw" />
-                {images.length > 3 && (
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
-                    <span className="text-white font-semibold text-lg">+{images.length - 3} ảnh</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        <span className="absolute bottom-3 right-3 bg-black/50 text-white text-xs font-medium px-3 py-1 rounded-full backdrop-blur-sm">
-          📷 {images.length} ảnh
-        </span>
-      </div>
-
-      {lightbox && (
-        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4" onClick={() => setLightbox(false)}>
-          <button onClick={() => setLightbox(false)}
-            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 text-xl z-10">
-            ✕
-          </button>
-          <img src={images[activeIdx]} alt="" className="max-w-full max-h-[85vh] object-contain rounded-lg" onClick={(e) => e.stopPropagation()} />
-          {images.length > 1 && (
-            <>
-              <button onClick={(e) => { e.stopPropagation(); setActiveIdx(i => (i - 1 + images.length) % images.length); }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 text-2xl">
-                ‹
-              </button>
-              <button onClick={(e) => { e.stopPropagation(); setActiveIdx(i => (i + 1) % images.length); }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 text-2xl">
-                ›
-              </button>
-            </>
-          )}
-          <span className="absolute top-4 left-1/2 -translate-x-1/2 text-white/80 text-sm">
-            {activeIdx + 1} / {images.length}
-          </span>
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 max-w-[90vw] overflow-x-auto pb-1">
-            {images.map((img, idx) => (
-              <button key={idx} onClick={(e) => { e.stopPropagation(); setActiveIdx(idx); }}
-                className={`relative flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
-                  idx === activeIdx ? 'border-white shadow-lg' : 'border-transparent opacity-50 hover:opacity-80'
-                }`}>
-                <OptimizedImage src={img} alt="" fill className="object-cover" sizes="60px" />
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
-// ==================== Video Gallery ====================
-function VideoGallery({ videos }: { videos: string[] }) {
-  const [activeIdx, setActiveIdx] = useState(0);
-
-  if (videos.length === 0) return null;
-
-  return (
-    <div>
-      <div className="relative rounded-2xl overflow-hidden bg-black">
-        <video
-          key={videos[activeIdx]}
-          src={videos[activeIdx]}
-          className="w-full max-h-80 object-contain"
-          controls
-          autoPlay
-          muted
-          playsInline
-          preload="metadata"
-        />
-      </div>
-      {videos.length > 1 && (
-        <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
-          {videos.map((v, i) => (
-            <button
-              key={v}
-              onClick={() => setActiveIdx(i)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
-                i === activeIdx
-                  ? 'bg-brand-600 text-white border-brand-600'
-                  : 'bg-white text-stone-600 border-stone-200 hover:border-brand-300'
-              }`}
-            >
-              🎬 Video {i + 1}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ==================== Media Tabs (Ảnh | Video) ====================
-function MediaTabs({ images, videos }: { images: string[]; videos: string[] }) {
-  const [tab, setTab] = useState<'image' | 'video'>('image');
-
-  if (videos.length === 0) {
-    return <ImageGallery images={images} />;
-  }
-
-  return (
-    <div>
-      <div className="flex gap-2 mb-3">
-        <button onClick={() => setTab('image')}
-          className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-            tab === 'image' ? 'bg-brand-600 text-white' : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-50'
-          }`}>
-          📷 Ảnh ({images.length})
-        </button>
-        <button onClick={() => setTab('video')}
-          className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-            tab === 'video' ? 'bg-brand-600 text-white' : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-50'
-          }`}>
-          🎬 Video ({videos.length})
-        </button>
-      </div>
-      {tab === 'image' ? <ImageGallery images={images} /> : <VideoGallery videos={videos} />}
-    </div>
-  );
-}
 
 // ==================== Related Room Card ====================
 function RelatedRoomCard({ rt }: { rt: any }) {
@@ -299,6 +131,7 @@ export default function ShareViewClient() {
   const propImages: string[] = useMemo(() => property?.images || [], [property]);
   const allImages = useMemo(() => [...roomImages, ...propImages], [roomImages, propImages]);
   const videos: string[] = useMemo(() => roomType?.videos || [], [roomType]);
+  const videoLinks: string[] = useMemo(() => roomType?.videoLinks || [], [roomType]);
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-stone-50">
@@ -357,7 +190,7 @@ export default function ShareViewClient() {
 
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
         {/* Section 1: Media (ảnh + video) */}
-        <MediaTabs images={allImages} videos={videos} />
+        <VideoGallery images={allImages} videos={videos} videoLinks={videoLinks} />
 
         {/* Section 2: Thông tin cơ bản */}
         <div className="card">

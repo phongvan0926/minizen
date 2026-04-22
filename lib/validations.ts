@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isValidVideoUrl } from './video-utils';
 
 // ===== Auth =====
 export const loginSchema = z.object({
@@ -56,6 +57,9 @@ export const roomTypeCreateSchema = z.object({
   amenities: z.array(z.string()).optional(),
   images: z.array(z.string()).optional(),
   videos: z.array(z.string()).optional(),
+  videoLinks: z
+    .array(z.string().refine(isValidVideoUrl, 'Link video phải là YouTube/TikTok/Facebook hợp lệ'))
+    .optional(),
   totalUnits: z.union([z.number().int().positive(), z.string()]).optional(),
   availableUnits: z.union([z.number().int().min(0), z.string()]).optional(),
   availableRoomNames: z.string().optional().nullable(),

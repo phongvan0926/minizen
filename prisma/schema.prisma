@@ -167,6 +167,7 @@ model RoomType {
   amenities           String[]  @default([])
   images              String[]  @default([])
   videos              String[]  @default([])  // URL video từ Supabase Storage (tối đa 3)
+  videoLinks          String[]  @default([])  // link YouTube/TikTok/Facebook Video
 
   // Quản lý số lượng theo loại
   totalUnits          Int       @default(1)    // tổng số phòng loại này

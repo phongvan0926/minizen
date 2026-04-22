@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import ImageUpload from '@/components/ui/ImageUpload';
 import VideoUpload from '@/components/ui/VideoUpload';
+import VideoLinkInput from '@/components/ui/VideoLinkInput';
 import { formatCurrency } from '@/lib/utils';
 
 interface RoomTypeData {
@@ -24,6 +25,7 @@ interface RoomTypeData {
   amenities: string[];
   images: string[];
   videos: string[];
+  videoLinks: string[];
   commissionRows: { months: string; percent: number }[];
   landlordNotes: string;
   isApproved: boolean;
@@ -76,6 +78,7 @@ const defaultData: RoomTypeData = {
   amenities: [],
   images: [],
   videos: [],
+  videoLinks: [],
   commissionRows: [
     { months: '6', percent: 40 },
     { months: '12', percent: 50 },
@@ -136,6 +139,7 @@ export default function RoomTypeForm({ initialData, properties, onSubmit, isAdmi
         amenities: initialData.amenities || [],
         images: initialData.images || [],
         videos: initialData.videos || [],
+        videoLinks: initialData.videoLinks || [],
         commissionRows: parseCommission(initialData.commissionJson),
         landlordNotes: initialData.landlordNotes || '',
         isApproved: initialData.isApproved ?? false,
@@ -257,6 +261,7 @@ export default function RoomTypeForm({ initialData, properties, onSubmit, isAdmi
       amenities: form.amenities,
       images: form.images,
       videos: form.videos,
+      videoLinks: form.videoLinks,
       commissionJson: JSON.stringify(commissionObj),
       landlordNotes: form.landlordNotes,
       isApproved: form.isApproved,
@@ -538,14 +543,31 @@ export default function RoomTypeForm({ initialData, properties, onSubmit, isAdmi
 
       {/* Section 6b: Video tin đăng */}
       <div className="card">
-        <h3 className="text-lg font-semibold text-stone-900 mb-2">Video tin đăng</h3>
-        <p className="text-xs text-stone-400 mb-4">Tải lên video quay phòng (tour thực tế). Tối đa 3 video, mỗi video ≤ 50MB. Định dạng: MP4, WebM, MOV.</p>
-        <VideoUpload
-          videos={form.videos}
-          onChange={urls => updateField('videos', urls)}
-          maxVideos={3}
-          folder="videos"
-        />
+        <h3 className="text-lg font-semibold text-stone-900 mb-1">Video tin đăng</h3>
+        <p className="text-xs text-stone-400 mb-4">Có thể dùng cả 2 cách: upload video tự quay và/hoặc dán link từ YouTube, TikTok, Facebook.</p>
+
+        <div className="space-y-5">
+          <div>
+            <p className="text-sm font-medium text-stone-700 mb-1">📹 Upload video (tối đa 3)</p>
+            <p className="text-xs text-stone-400 mb-2">Video ngắn 15-30 giây quay bằng điện thoại. Định dạng MP4/WebM/MOV, ≤ 50MB mỗi file.</p>
+            <VideoUpload
+              videos={form.videos}
+              onChange={urls => updateField('videos', urls)}
+              maxVideos={3}
+              folder="videos"
+            />
+          </div>
+
+          <div className="pt-4 border-t border-stone-100">
+            <p className="text-sm font-medium text-stone-700 mb-1">🔗 Link video (tối đa 5)</p>
+            <p className="text-xs text-stone-400 mb-2">Dán link video từ YouTube, TikTok hoặc Facebook.</p>
+            <VideoLinkInput
+              videoLinks={form.videoLinks}
+              onChange={links => updateField('videoLinks', links)}
+              maxLinks={5}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Section 7: Hoa hồng cho MG */}

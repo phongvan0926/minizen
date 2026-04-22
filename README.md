@@ -178,7 +178,7 @@ mixstay/
 │   └── page.tsx         # Landing page
 ├── components/
 │   ├── layout/          # Dashboard layout, AuthProvider
-│   └── ui/              # Skeleton, ImageUpload, OptimizedImage, Pagination
+│   └── ui/              # Skeleton, ImageUpload, VideoUpload, VideoLinkInput, VideoPlayer, VideoGallery, OptimizedImage, Pagination
 ├── hooks/
 │   └── useData.ts       # SWR hooks (useProperties, useRoomTypes, useDeals, etc.)
 ├── lib/
@@ -188,6 +188,7 @@ mixstay/
 │   ├── fetcher.ts       # SWR fetcher
 │   ├── pagination.ts    # Server-side pagination helper
 │   ├── rate-limit.ts    # API rate limiter
+│   ├── video-utils.ts   # Parse YouTube/TikTok/Facebook URL, thumbnail, embed
 │   └── validations.ts   # Zod validation schemas
 ├── prisma/
 │   ├── schema.prisma    # Database schema
@@ -222,6 +223,23 @@ mixstay/
 - **PWA:** Web app manifest, SVG icons, standalone display mode
 
 ## Changelog
+
+### v9 — Hybrid video: upload trực tiếp + embed YouTube/TikTok/Facebook
+- **Hai cách thêm video cho loại phòng:** field `videos[]` (URL file upload, tối đa 3) + field `videoLinks[]` (link YouTube/TikTok/Facebook) — chủ nhà có thể trộn cả hai
+- **Upload qua signed URL:** API mới `app/api/upload/signed-url/route.ts` dùng Supabase `createSignedUploadUrl()` — client PUT file thẳng lên Storage bucket `videos`, KHÔNG qua Vercel serverless (tránh giới hạn 4.5MB và timeout)
+- **Component mới:**
+  - `components/ui/VideoLinkInput.tsx`: nhập & validate link YouTube/TikTok/Facebook, preview thumbnail ngay
+  - `components/ui/VideoPlayer.tsx`: player lazy load — click thumbnail mới load iframe/`<video>` (tiết kiệm bandwidth), responsive 16:9
+  - `components/ui/VideoGallery.tsx`: gallery gộp cả video upload + video link trên trang tin đăng
+- **Thumbnail tự động:**
+  - YouTube: lấy từ `img.youtube.com/vi/{id}/hqdefault.jpg` (không cần API key)
+  - TikTok/Facebook: icon placeholder (không có free API)
+- **Helper `lib/video-utils.ts`:** `getYouTubeId`, `getTikTokId`, `getFacebookVideoId`, `getVideoPlatform`, `getVideoThumbnail`, `getEmbedUrl`
+- **Schema changes:** RoomType thêm `videos String[]` và `videoLinks String[]` (field cũ `videoUrl` được thay thế/mở rộng)
+- **API updates:**
+  - `/api/rooms/public`: trả `videoLinks[]` + `hasVideo` boolean (KHÔNG trả `videos[]` để giảm payload trang chủ)
+  - `/api/share-links` (system + single token): trả đầy đủ `videos[]` + `videoLinks[]` cho `ShareViewClient` / `SystemShareClient`
+- **Sau khi pull code v9:** chạy `npm install && npx prisma db push`; nếu chưa có, tạo bucket Supabase Storage tên `videos` (public) + policy cho authenticated users upload
 
 ### v8 — Public search, video upload, related listings, short share link, UX polish
 - **Trang chủ public có tìm kiếm:** `app/page.tsx` + `app/PublicSearch.tsx` hiển thị grid phòng trống đã duyệt cho khách chưa đăng nhập, có bộ lọc nhanh (khu vực, khoảng giá, kiểu phòng) — dùng API `/api/rooms/public`

@@ -31,6 +31,7 @@ type PublicRoom = {
   priceMonthly: number;
   amenities: string[];
   images: string[];
+  hasVideo: boolean;
   availableUnits: number;
   shortTermAllowed: boolean;
   property: {
@@ -241,10 +242,18 @@ export default function PublicSearch() {
                   >
                     <div className="relative">
                       <RoomCarousel images={rt.images} alt={rt.name} />
-                      <div className="absolute top-3 left-3">
+                      <div className="absolute top-3 left-3 flex items-center gap-1.5">
                         <span className="inline-flex items-center rounded-full bg-white/90 backdrop-blur-sm px-2.5 py-1 text-xs font-medium text-stone-700 border border-white">
                           {TYPE_LABEL[rt.typeName] || rt.typeName}
                         </span>
+                        {rt.hasVideo && (
+                          <span
+                            title="Có video"
+                            className="inline-flex items-center justify-center rounded-full bg-black/60 backdrop-blur-sm text-white text-[11px] w-6 h-6 shadow"
+                          >
+                            🎬
+                          </span>
+                        )}
                       </div>
                       <div className="absolute top-3 right-3">
                         <span className="inline-flex items-center rounded-full bg-emerald-500 px-2.5 py-1 text-xs font-semibold text-white shadow">

@@ -21,9 +21,11 @@ app/landlord/       → Trang chủ nhà (chỉ còn properties — đã gộp q
 app/share/[token]/  → Trang tin đăng loại phòng (public, ẩn địa chỉ + SĐT, có video + tin đăng liên quan)
 app/share/system/[token]/ → Trang kho phòng hệ thống (public, có toggle grid/list view)
 app/auth/callback/  → Trang chọn vai trò sau OAuth login lần đầu
-app/api/            → API routes (companies, properties, rooms, rooms/public, rooms/related, rooms/import, deals, share-links, share-links/system, inquiries, notifications, users, settings)
+app/api/            → API routes (companies, properties, rooms, rooms/public, rooms/related, rooms/import, deals, share-links, share-links/system, inquiries, notifications, users, settings, upload/signed-url)
+app/api/upload/signed-url/ → Tạo Supabase signed upload URL (upload video trực tiếp client → Storage, không qua Vercel serverless)
 components/layout/  → DashboardLayout.tsx (sidebar + topbar + notification badge), AuthProvider.tsx
-components/ui/      → Skeleton.tsx, ImageUpload.tsx, VideoUpload.tsx, OptimizedImage.tsx, Pagination.tsx
+components/ui/      → Skeleton.tsx, ImageUpload.tsx, VideoUpload.tsx, VideoLinkInput.tsx, VideoPlayer.tsx, VideoGallery.tsx, OptimizedImage.tsx, Pagination.tsx
+lib/video-utils.ts  → Parse YouTube/TikTok/Facebook URL, lấy videoId, thumbnail (img.youtube.com cho YT), detect platform
 hooks/useData.ts    → SWR hooks: useProperties, useRoomTypes, useDeals, useUsers, useShareLinks, useCompanies, useDashboardStats, useInquiries
 lib/auth.ts         → NextAuth config
 lib/prisma.ts       → Prisma client singleton
@@ -42,7 +44,7 @@ middleware.ts       → Route protection theo role
 - users: id, name, email, phone, password, role (ADMIN/BROKER/LANDLORD/CUSTOMER), isActive, setupComplete
 - accounts: id, userId, type, provider, providerAccountId (OAuth accounts)
 - properties: id, companyId?, landlordId, name, fullAddress, district, streetName, zaloPhone, landlordNotes, parkingCar, evCharging, petAllowed, foreignerOk, status (PENDING/APPROVED/REJECTED)
-- room_types: id, propertyId, name, typeName (don/gac_xep/1k1n/2k1n/studio/duplex), areaSqm, priceMonthly, deposit, description, amenities[], images[], videoUrl, totalUnits, availableUnits, availableRoomNames, isAvailable, isApproved, commissionJson, shortTermAllowed, shortTermMonths, shortTermPrice, landlordNotes, viewCount
+- room_types: id, propertyId, name, typeName (don/gac_xep/1k1n/2k1n/studio/duplex), areaSqm, priceMonthly, deposit, description, amenities[], images[], videos[] (URL upload Supabase, tối đa 3), videoLinks[] (YouTube/TikTok/Facebook embed), totalUnits, availableUnits, availableRoomNames, isAvailable, isApproved, commissionJson, shortTermAllowed, shortTermMonths, shortTermPrice, landlordNotes, viewCount
 - deals: id, roomTypeId, brokerId, dealPrice, commissionTotal, commissionBroker, commissionCompany, status (PENDING/CONFIRMED/PAID/CANCELLED)
 - share_links: id, roomTypeId?, brokerId, token (unique), viewCount, isSystem, isActive, expiresAt
 - room_inquiries: id, roomTypeId, brokerId, message, reply (CÒN/HẾT), repliedAt
@@ -104,6 +106,17 @@ middleware.ts       → Route protection theo role
 - app/share/system/[token]/page.tsx: generateMetadata() cho kho phòng
 - app/sitemap.ts, app/robots.ts
 - public/manifest.json, public/icon-*.svg
+
+## Video Hybrid (upload + embed)
+- 2 cách bổ sung video cho RoomType: **upload trực tiếp** (field `videos[]`) hoặc **nhúng link** (field `videoLinks[]`)
+- `components/ui/VideoUpload.tsx`: upload tối đa 3 video qua signed URL → Supabase Storage bucket `videos` (bypass Vercel serverless 4.5MB limit)
+- `app/api/upload/signed-url/route.ts`: gọi `supabase.storage.from('videos').createSignedUploadUrl()` trả URL + token, client PUT file trực tiếp
+- `components/ui/VideoLinkInput.tsx`: nhập link YouTube/TikTok/Facebook, validate qua `lib/video-utils.ts` (parse videoId, detect platform)
+- `components/ui/VideoPlayer.tsx`: lazy load — chỉ load iframe/player khi user click thumbnail (tiết kiệm bandwidth); responsive 16:9
+- `components/ui/VideoGallery.tsx`: gộp hiển thị cả `videos[]` và `videoLinks[]` trên trang tin đăng (thumbnails + click để phát)
+- Thumbnail tự động: YouTube lấy từ `img.youtube.com/vi/{id}/hqdefault.jpg` (không cần API key); TikTok/Facebook dùng icon placeholder (không có free API)
+- `lib/video-utils.ts`: `getYouTubeId()`, `getTikTokId()`, `getFacebookVideoId()`, `getVideoThumbnail()`, `getVideoPlatform()`, `getEmbedUrl()`
+- API `rooms/public` chỉ trả `videoLinks[]` + `hasVideo` boolean (KHÔNG trả `videos[]` để giảm payload); share-links trả đầy đủ `videos[]` + `videoLinks[]`
 
 ## Skeleton Loading (components/ui/Skeleton.tsx)
 - SkeletonCard, SkeletonTable, SkeletonStats, SkeletonText, SkeletonCardGrid, SkeletonList

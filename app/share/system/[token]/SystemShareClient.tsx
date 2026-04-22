@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { formatCurrency } from '@/lib/utils';
 import OptimizedImage from '@/components/ui/OptimizedImage';
+import VideoGallery from '@/components/ui/VideoGallery';
 
 const roomTypeLabels: Record<string, string> = {
   don: 'Phòng đơn', gac_xep: 'Gác xép', '1k1n': '1 khách 1 ngủ',
@@ -369,10 +370,15 @@ export default function SystemShareClient() {
                   {/* Card carousel — 3 ảnh */}
                   <div className="relative h-44 overflow-hidden">
                     <CardCarousel images={cardImages} />
-                    <div className="absolute top-3 left-3">
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5">
                       <span className="badge bg-white/90 text-stone-700 backdrop-blur-sm text-xs">
                         {roomTypeLabels[rt.typeName] || rt.typeName}
                       </span>
+                      {((rt.videos?.length || 0) + (rt.videoLinks?.length || 0)) > 0 && (
+                        <span className="badge bg-black/60 text-white text-[11px] backdrop-blur-sm" title="Có video">
+                          🎬 Video
+                        </span>
+                      )}
                     </div>
                     <div className="absolute top-3 right-3">
                       <span className="badge bg-emerald-500 text-white text-xs">
@@ -448,17 +454,16 @@ export default function SystemShareClient() {
               </svg>
             </button>
 
-            {/* Images */}
-            {(() => {
-              const imgs = [...(selectedRoom.images || []), ...(selectedRoom.property?.images || [])];
-              return imgs.length > 0 ? (
-                <div className="h-56 overflow-hidden">
-                  <CardCarousel images={imgs} />
-                </div>
-              ) : null;
-            })()}
-
             <div className="p-5 space-y-4">
+              {/* Media */}
+              {(() => {
+                const imgs = [...(selectedRoom.images || []), ...(selectedRoom.property?.images || [])];
+                const vids = selectedRoom.videos || [];
+                const vidLinks = selectedRoom.videoLinks || [];
+                if (imgs.length === 0 && vids.length === 0 && vidLinks.length === 0) return null;
+                return <VideoGallery images={imgs} videos={vids} videoLinks={vidLinks} />;
+              })()}
+
               {/* Header */}
               <div>
                 <div className="flex items-start justify-between">
