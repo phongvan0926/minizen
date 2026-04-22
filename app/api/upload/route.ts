@@ -15,12 +15,7 @@ const VIDEO_MAX_SIZE = 50 * 1024 * 1024; // 50MB
 
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
 
-export const config = {
-  api: {
-    bodyParser: false,
-    responseLimit: false,
-  },
-};
+export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
   const rateLimited = applyRateLimit(req, 'upload');
