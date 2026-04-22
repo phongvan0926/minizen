@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { CountUpStats } from './CountUpStats';
+import PublicSearch from './PublicSearch';
 
 const featuredRooms = [
   { name: 'Chung cư mini Cầu Giấy Premium', district: 'Cầu Giấy', price: 3500000, area: 25, type: 'Gác xép', amenities: ['Điều hoà', 'WC riêng', 'Ban công'], badge: 'Hot' },
@@ -111,6 +112,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ===== TÌM PHÒNG PUBLIC ===== */}
+      <PublicSearch />
 
       {/* ===== PHÒNG NỔI BẬT ===== */}
       <section className="relative py-16 sm:py-20 px-4 sm:px-6 overflow-hidden">
@@ -358,12 +362,12 @@ export default function HomePage() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-10 mb-12">
             {/* About */}
             <div>
-              <div className="flex items-center gap-2.5 mb-4">
+              <Link href="/" className="flex items-center gap-2.5 mb-4 w-fit">
                 <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center">
                   <span className="text-white font-bold text-sm">M</span>
                 </div>
                 <span className="font-display font-bold text-lg text-white">MixStay</span>
-              </div>
+              </Link>
               <p className="text-sm leading-relaxed">
                 Nền tảng kết nối Chủ nhà, Môi giới và Khách thuê chung cư mini.
                 Minh bạch — Nhanh chóng — Miễn phí cho khách.

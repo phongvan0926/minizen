@@ -64,6 +64,27 @@ export default function SystemShareClient() {
   const [filterType, setFilterType] = useState('');
   const [filterPriceMin, setFilterPriceMin] = useState('');
   const [filterPriceMax, setFilterPriceMax] = useState('');
+  const [filterAmenities, setFilterAmenities] = useState<string[]>([]);
+  const [filterParkingCar, setFilterParkingCar] = useState(false);
+  const [filterParkingBike, setFilterParkingBike] = useState(false);
+  const [filterEvCharging, setFilterEvCharging] = useState(false);
+  const [filterPetAllowed, setFilterPetAllowed] = useState(false);
+  const [filterForeignerOk, setFilterForeignerOk] = useState(false);
+  const [filterShortTerm, setFilterShortTerm] = useState(false);
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
+
+  const toggleAmenityFilter = (a: string) => {
+    setFilterAmenities(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a]);
+  };
+
+  const clearAllFilters = () => {
+    setFilterDistrict(''); setFilterType('');
+    setFilterPriceMin(''); setFilterPriceMax('');
+    setFilterAmenities([]);
+    setFilterParkingCar(false); setFilterParkingBike(false); setFilterEvCharging(false);
+    setFilterPetAllowed(false); setFilterForeignerOk(false);
+    setFilterShortTerm(false);
+  };
 
   useEffect(() => {
     fetch(`/api/share-links?systemToken=${token}`)
@@ -93,6 +114,13 @@ export default function SystemShareClient() {
     return Array.from(set) as string[];
   }, [allRoomTypes]);
 
+  // All available room amenities for filter panel
+  const amenityOptions = useMemo(() => {
+    const set = new Set<string>();
+    allRoomTypes.forEach((rt: any) => (rt.amenities || []).forEach((a: string) => set.add(a)));
+    return Array.from(set).sort();
+  }, [allRoomTypes]);
+
   // Filtered results
   const filteredRoomTypes = useMemo(() => {
     return allRoomTypes.filter((rt: any) => {
@@ -100,11 +128,34 @@ export default function SystemShareClient() {
       if (filterType && rt.typeName !== filterType) return false;
       if (filterPriceMin && rt.priceMonthly < Number(filterPriceMin)) return false;
       if (filterPriceMax && rt.priceMonthly > Number(filterPriceMax)) return false;
+
+      // Amenity filter: all selected amenities must be present
+      if (filterAmenities.length > 0) {
+        const rtAmen: string[] = rt.amenities || [];
+        if (!filterAmenities.every(a => rtAmen.includes(a))) return false;
+      }
+
+      // Property-level toggles
+      if (filterParkingCar && !rt.property?.parkingCar) return false;
+      if (filterParkingBike && !rt.property?.parkingBike) return false;
+      if (filterEvCharging && !rt.property?.evCharging) return false;
+      if (filterPetAllowed && !rt.property?.petAllowed) return false;
+      if (filterForeignerOk && !rt.property?.foreignerOk) return false;
+
+      // Short-term toggle
+      if (filterShortTerm && !rt.shortTermAllowed) return false;
+
       return true;
     });
-  }, [allRoomTypes, filterDistrict, filterType, filterPriceMin, filterPriceMax]);
+  }, [allRoomTypes, filterDistrict, filterType, filterPriceMin, filterPriceMax,
+      filterAmenities, filterParkingCar, filterParkingBike, filterEvCharging,
+      filterPetAllowed, filterForeignerOk, filterShortTerm]);
 
-  const hasActiveFilters = filterDistrict || filterType || filterPriceMin || filterPriceMax;
+  const hasActiveFilters = Boolean(
+    filterDistrict || filterType || filterPriceMin || filterPriceMax ||
+    filterAmenities.length > 0 || filterParkingCar || filterParkingBike ||
+    filterEvCharging || filterPetAllowed || filterForeignerOk || filterShortTerm
+  );
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-stone-50">
@@ -133,12 +184,12 @@ export default function SystemShareClient() {
       {/* Navbar */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-stone-200/60">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center">
               <span className="text-white font-bold text-xs">M</span>
             </div>
             <span className="font-display font-semibold">MixStay</span>
-          </div>
+          </Link>
           <span className="text-xs text-stone-400">Kho phòng của {landlord?.name}</span>
         </div>
       </nav>
@@ -203,21 +254,93 @@ export default function SystemShareClient() {
                   className="input-field text-sm"
                 />
               </div>
+            </div>
 
+            {/* Toggle more filters */}
+            <button
+              type="button"
+              onClick={() => setShowMoreFilters(v => !v)}
+              className="mt-3 text-sm text-brand-600 hover:text-brand-700 font-medium inline-flex items-center gap-1"
+            >
+              {showMoreFilters ? '▲ Thu gọn bộ lọc' : '▼ Bộ lọc nâng cao'}
+            </button>
+
+            {showMoreFilters && (
+              <div className="mt-4 space-y-4 pt-4 border-t border-stone-100">
+                {/* Special property features */}
+                <div>
+                  <p className="text-xs font-medium text-stone-500 mb-2">Tiện ích đặc biệt tòa nhà</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { key: 'parkingCar', icon: '🚗', label: 'Ô tô đỗ cửa', on: filterParkingCar, set: setFilterParkingCar },
+                      { key: 'parkingBike', icon: '🏍️', label: 'Để xe máy', on: filterParkingBike, set: setFilterParkingBike },
+                      { key: 'evCharging', icon: '⚡', label: 'Sạc xe điện', on: filterEvCharging, set: setFilterEvCharging },
+                      { key: 'petAllowed', icon: '🐾', label: 'Pet OK', on: filterPetAllowed, set: setFilterPetAllowed },
+                      { key: 'foreignerOk', icon: '🌍', label: 'Foreigner OK', on: filterForeignerOk, set: setFilterForeignerOk },
+                    ].map(f => (
+                      <button
+                        key={f.key}
+                        type="button"
+                        onClick={() => f.set(!f.on)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${
+                          f.on
+                            ? 'bg-brand-600 text-white border-brand-600'
+                            : 'bg-white text-stone-600 border-stone-200 hover:border-brand-300'
+                        }`}
+                      >
+                        {f.icon} {f.label}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setFilterShortTerm(!filterShortTerm)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${
+                        filterShortTerm
+                          ? 'bg-violet-600 text-white border-violet-600'
+                          : 'bg-white text-stone-600 border-stone-200 hover:border-violet-300'
+                      }`}
+                    >
+                      📅 Cho thuê ngắn hạn
+                    </button>
+                  </div>
+                </div>
+
+                {/* Room amenities */}
+                {amenityOptions.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-stone-500 mb-2">Nội thất / Tiện ích phòng</p>
+                    <div className="flex flex-wrap gap-2">
+                      {amenityOptions.map(a => (
+                        <button
+                          key={a}
+                          type="button"
+                          onClick={() => toggleAmenityFilter(a)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${
+                            filterAmenities.includes(a)
+                              ? 'bg-brand-50 border-brand-400 text-brand-700'
+                              : 'bg-white text-stone-600 border-stone-200 hover:border-brand-300'
+                          }`}
+                        >
+                          {filterAmenities.includes(a) ? '✓ ' : ''}{a}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-stone-100">
+              <p className="text-xs text-stone-400">
+                Hiển thị <strong className="text-stone-700">{filteredRoomTypes.length}</strong> / {allRoomTypes.length} loại phòng
+              </p>
               {hasActiveFilters && (
-                <button
-                  onClick={() => { setFilterDistrict(''); setFilterType(''); setFilterPriceMin(''); setFilterPriceMax(''); }}
-                  className="text-sm text-brand-600 hover:text-brand-700 font-medium pb-2"
-                >
-                  Xóa lọc
+                <button onClick={clearAllFilters}
+                  className="text-sm text-brand-600 hover:text-brand-700 font-medium">
+                  Xoá lọc
                 </button>
               )}
             </div>
-            {hasActiveFilters && (
-              <p className="text-xs text-stone-400 mt-2">
-                Hiển thị {filteredRoomTypes.length} / {allRoomTypes.length} loại phòng
-              </p>
-            )}
           </div>
         )}
 
@@ -228,10 +351,10 @@ export default function SystemShareClient() {
             <p>{hasActiveFilters ? 'Không có phòng nào phù hợp bộ lọc.' : 'Hiện không có phòng trống nào.'}</p>
             {hasActiveFilters && (
               <button
-                onClick={() => { setFilterDistrict(''); setFilterType(''); setFilterPriceMin(''); setFilterPriceMax(''); }}
+                onClick={clearAllFilters}
                 className="mt-3 text-sm text-brand-600 hover:text-brand-700 font-medium"
               >
-                Xóa bộ lọc
+                Xoá bộ lọc
               </button>
             )}
           </div>
@@ -281,16 +404,14 @@ export default function SystemShareClient() {
                       )}
                     </div>
 
-                    {rt.amenities?.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-3">
-                        {rt.amenities.slice(0, 4).map((a: string) => (
-                          <span key={a} className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded">{a}</span>
-                        ))}
-                        {rt.amenities.length > 4 && (
-                          <span className="text-[10px] text-stone-400">+{rt.amenities.length - 4}</span>
-                        )}
-                      </div>
-                    )}
+                    {/* Property-level special amenities */}
+                    <div className="flex flex-wrap gap-1 mt-3">
+                      {rt.property?.parkingCar && <span className="text-[10px] bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded font-medium">🚗 Ô tô đỗ cửa</span>}
+                      {rt.property?.parkingBike && <span className="text-[10px] bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded font-medium">🏍️ Để xe máy</span>}
+                      {rt.property?.evCharging && <span className="text-[10px] bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded font-medium">⚡ Sạc xe điện</span>}
+                      {rt.property?.petAllowed && <span className="text-[10px] bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded font-medium">🐾 Thú cưng OK</span>}
+                      {rt.property?.foreignerOk && <span className="text-[10px] bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded font-medium">🌍 Người nước ngoài</span>}
+                    </div>
 
                     <button className="mt-3 w-full text-sm text-brand-600 font-medium py-2 bg-brand-50 rounded-xl hover:bg-brand-100 transition-colors">
                       Xem chi tiết →
@@ -306,7 +427,7 @@ export default function SystemShareClient() {
         <div className="mt-10 mb-6 text-center">
           <div className="card bg-gradient-to-br from-brand-600 to-brand-700 text-white border-0 max-w-lg mx-auto">
             <p className="font-display font-semibold text-lg mb-1">Quan tâm phòng nào?</p>
-            <p className="text-brand-100 text-sm">Liên hệ qua môi giới để được tư vấn và hẹn xem phòng miễn phí.</p>
+            <p className="text-brand-100 text-sm">Liên hệ hỗ trợ để được tư vấn và hẹn xem phòng miễn phí.</p>
           </div>
           <p className="text-xs text-stone-400 mt-6">
             Powered by MixStay • Kho phòng của {landlord?.name}

@@ -1,0 +1,103 @@
+import { NextRequest, NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
+import { getPaginationParams, paginatedResponse } from '@/lib/pagination';
+import { applyRateLimit } from '@/lib/rate-limit';
+
+export async function GET(req: NextRequest) {
+  const rateLimited = applyRateLimit(req, 'api');
+  if (rateLimited) return rateLimited;
+
+  try {
+    const url = new URL(req.url);
+    const district = url.searchParams.get('district');
+    const typeName = url.searchParams.get('typeName');
+    const minPrice = url.searchParams.get('minPrice');
+    const maxPrice = url.searchParams.get('maxPrice');
+
+    const where: any = {
+      isApproved: true,
+      isAvailable: true,
+      availableUnits: { gt: 0 },
+      property: { status: 'APPROVED', isActive: true },
+    };
+
+    if (typeName) where.typeName = typeName;
+    if (minPrice) where.priceMonthly = { ...where.priceMonthly, gte: parseFloat(minPrice) };
+    if (maxPrice) where.priceMonthly = { ...where.priceMonthly, lte: parseFloat(maxPrice) };
+    if (district) {
+      where.property = { ...where.property, district: { contains: district, mode: 'insensitive' } };
+    }
+
+    const { page, limit, skip } = getPaginationParams(url);
+
+    const [roomTypes, total, activeShareLinks] = await Promise.all([
+      prisma.roomType.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          typeName: true,
+          areaSqm: true,
+          priceMonthly: true,
+          deposit: true,
+          amenities: true,
+          images: true,
+          availableUnits: true,
+          shortTermAllowed: true,
+          property: {
+            select: {
+              name: true,
+              district: true,
+              streetName: true,
+              city: true,
+              images: true,
+              parkingCar: true,
+              parkingBike: true,
+              evCharging: true,
+              petAllowed: true,
+              foreignerOk: true,
+            },
+          },
+        },
+        orderBy: [{ createdAt: 'desc' }],
+        skip,
+        take: limit,
+      }),
+      prisma.roomType.count({ where }),
+      prisma.shareLink.findMany({
+        where: { isActive: true, isSystem: false, roomTypeId: { not: null } },
+        select: { roomTypeId: true, token: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    const tokenByRoomType = new Map<string, string>();
+    for (const link of activeShareLinks) {
+      if (link.roomTypeId && !tokenByRoomType.has(link.roomTypeId)) {
+        tokenByRoomType.set(link.roomTypeId, link.token);
+      }
+    }
+
+    const withShareToken = roomTypes.map(rt => {
+      const images = [...(rt.images || []), ...(rt.property?.images || [])].slice(0, 3);
+      return {
+        id: rt.id,
+        name: rt.name,
+        typeName: rt.typeName,
+        areaSqm: rt.areaSqm,
+        priceMonthly: rt.priceMonthly,
+        deposit: rt.deposit,
+        amenities: rt.amenities,
+        images,
+        availableUnits: rt.availableUnits,
+        shortTermAllowed: rt.shortTermAllowed,
+        property: rt.property,
+        shareToken: tokenByRoomType.get(rt.id) || null,
+      };
+    });
+
+    return NextResponse.json(paginatedResponse(withShareToken, total, page, limit));
+  } catch (error) {
+    return NextResponse.json({ error: 'Lỗi server' }, { status: 500 });
+  }
+}

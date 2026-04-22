@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
             select: {
               id: true, name: true, typeName: true, areaSqm: true,
               priceMonthly: true, deposit: true, description: true,
-              amenities: true, images: true,
+              amenities: true, images: true, videos: true,
               totalUnits: true, availableUnits: true, availableRoomNames: true,
               shortTermAllowed: true, shortTermMonths: true, shortTermPrice: true,
             },
@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
             include: {
               property: {
                 select: {
-                  name: true, district: true, streetName: true, city: true,
+                  id: true, name: true, district: true, streetName: true, city: true,
                   amenities: true, images: true, totalFloors: true,
                   parkingCar: true, parkingBike: true, evCharging: true, petAllowed: true, foreignerOk: true,
                   // NO fullAddress, lat, lng, landlord phone
@@ -173,9 +173,42 @@ export async function POST(req: NextRequest) {
       }, { status: 201 });
     }
 
-    // Regular share link for broker
-    if (session.user.role !== 'BROKER' && session.user.role !== 'ADMIN') {
+    // Regular share link: BROKER, LANDLORD (own room types), or ADMIN
+    if (session.user.role !== 'BROKER' && session.user.role !== 'ADMIN' && session.user.role !== 'LANDLORD') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!body.roomTypeId) {
+      return NextResponse.json({ error: 'Thiếu roomTypeId' }, { status: 400 });
+    }
+
+    // LANDLORD can only share their own room types
+    if (session.user.role === 'LANDLORD') {
+      const rt = await prisma.roomType.findUnique({
+        where: { id: body.roomTypeId },
+        select: { property: { select: { landlordId: true } } },
+      });
+      if (!rt || rt.property.landlordId !== session.user.id) {
+        return NextResponse.json({ error: 'Không có quyền chia sẻ phòng này' }, { status: 403 });
+      }
+    }
+
+    // Reuse existing active link from this user for this room type
+    const existing = await prisma.shareLink.findFirst({
+      where: {
+        roomTypeId: body.roomTypeId,
+        brokerId: session.user.id,
+        isSystem: false,
+        isActive: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (existing && (!existing.expiresAt || new Date(existing.expiresAt) > new Date())) {
+      return NextResponse.json({
+        ...existing,
+        url: `${appUrl}/p/${existing.token}`,
+      });
     }
 
     const link = await prisma.shareLink.create({
@@ -189,7 +222,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       ...link,
-      url: `${appUrl}/share/${token}`,
+      url: `${appUrl}/p/${token}`,
     }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: 'Lỗi server' }, { status: 500 });

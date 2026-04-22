@@ -99,6 +99,7 @@ export async function GET(req: NextRequest) {
           description: true,
           amenities: true,
           images: true,
+          videos: true,
           totalUnits: true,
           availableUnits: true,
           availableRoomNames: true,
@@ -189,8 +190,11 @@ export async function POST(req: NextRequest) {
         description: body.description,
         amenities: body.amenities || [],
         images: body.images || [],
+        videos: body.videos || [],
         totalUnits: parseInt(body.totalUnits) || 1,
-        availableUnits: parseInt(body.availableUnits) ?? parseInt(body.totalUnits) ?? 1,
+        availableUnits: Number.isFinite(parseInt(body.availableUnits))
+          ? parseInt(body.availableUnits)
+          : (parseInt(body.totalUnits) || 1),
         availableRoomNames: body.availableRoomNames || null,
         commissionJson: body.commissionJson || null,
         shortTermAllowed: body.shortTermAllowed ?? false,
@@ -236,6 +240,7 @@ export async function PUT(req: NextRequest) {
         ...(data.description !== undefined && { description: data.description }),
         ...(data.amenities && { amenities: data.amenities }),
         ...(data.images !== undefined && { images: data.images }),
+        ...(data.videos !== undefined && { videos: data.videos }),
         ...(data.totalUnits !== undefined && { totalUnits: parseInt(data.totalUnits) }),
         ...(data.availableUnits !== undefined && { availableUnits: parseInt(data.availableUnits) }),
         ...(data.availableRoomNames !== undefined && { availableRoomNames: data.availableRoomNames }),

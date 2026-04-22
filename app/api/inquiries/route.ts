@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
         type: 'inquiry',
         title: `MG hỏi về ${inquiry.roomType.name}`,
         message: `${session.user.name} hỏi: "${inquiry.message}"`,
-        link: `/landlord/rooms`,
+        link: `/landlord/properties`,
       },
     });
 

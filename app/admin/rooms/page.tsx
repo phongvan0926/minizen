@@ -201,7 +201,7 @@ export default function AdminRoomsPage() {
 
   const toggleAvailability = async (id: string, current: boolean) => {
     await fetch('/api/rooms', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, isAvailable: !current }) });
-    toast.success(!current ? 'Đã bật phòng' : 'Đã tắt phòng'); mutate();
+    toast.success(!current ? 'Đã bật (Còn phòng)' : 'Đã tắt (Hết phòng)'); mutate();
   };
 
   const toggleApproval = async (id: string, current: boolean) => {
@@ -440,11 +440,6 @@ export default function AdminRoomsPage() {
                     </td>
                     <td className="table-cell">
                       <p className="font-semibold text-stone-900">{r.name}</p>
-                      {r.availableRoomNames && (
-                        <p className="text-[10px] text-stone-400 mt-0.5 max-w-[150px] truncate" title={r.availableRoomNames}>
-                          Phòng: {r.availableRoomNames}
-                        </p>
-                      )}
                     </td>
                     <td className="table-cell">
                       <p className="text-stone-700">{r.property?.name}</p>
@@ -463,6 +458,12 @@ export default function AdminRoomsPage() {
                         <span className="text-emerald-600 font-bold">{r.availableUnits}</span>
                         <span className="text-stone-400">/{r.totalUnits}</span>
                       </div>
+                      <p
+                        className="text-[10px] text-stone-400 mt-0.5 max-w-[140px] truncate"
+                        title={r.availableRoomNames || ''}
+                      >
+                        {r.availableRoomNames || '—'}
+                      </p>
                     </td>
                     <td className="table-cell"><span className="text-xs text-orange-600 font-medium">{getCommissionText(r)}</span></td>
                     <td className="table-cell">

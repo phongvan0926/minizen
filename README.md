@@ -45,8 +45,10 @@ Nền tảng quản lý chung cư mini — kết nối Chủ nhà, Môi giới, 
 - Theo dõi lượt xem link chia sẻ
 
 ### 👤 Khách thuê
-- **Trang tin đăng loại phòng:** gallery 3 ảnh grid + lightbox, thông tin đầy đủ (giá, diện tích, tiện ích, ngắn hạn, số phòng trống), nút Google Maps, nút liên hệ MG
-- **Trang kho phòng hệ thống:** xem tất cả phòng trống của 1 hệ thống, card carousel 3 ảnh, bộ lọc (khu vực, giá, kiểu phòng), nút "Xem chi tiết"
+- **Trang chủ công khai:** tìm kiếm phòng trống toàn hệ thống ngay trên homepage với bộ lọc khu vực / khoảng giá / kiểu phòng (không cần tài khoản)
+- **Trang tin đăng loại phòng:** gallery 3 ảnh grid + lightbox, video giới thiệu phòng (nếu có), thông tin đầy đủ (giá, diện tích, tiện ích, ngắn hạn, số phòng trống), nút Google Maps, nút liên hệ MG, gợi ý tin đăng liên quan
+- **Trang kho phòng hệ thống:** xem tất cả phòng trống của 1 hệ thống, toggle Grid ↔ List view, card carousel 3 ảnh, bộ lọc (khu vực, giá, kiểu phòng), nút "Xem chi tiết"
+- **Short share link `/p/{token}`:** URL rút gọn dễ gửi qua Zalo/SMS, tự redirect về trang tin đăng
 - Thấy khu vực & tuyến phố (KHÔNG thấy địa chỉ cụ thể & SĐT chủ nhà)
 - Liên hệ qua môi giới
 
@@ -220,6 +222,17 @@ mixstay/
 - **PWA:** Web app manifest, SVG icons, standalone display mode
 
 ## Changelog
+
+### v8 — Public search, video upload, related listings, short share link, UX polish
+- **Trang chủ public có tìm kiếm:** `app/page.tsx` + `app/PublicSearch.tsx` hiển thị grid phòng trống đã duyệt cho khách chưa đăng nhập, có bộ lọc nhanh (khu vực, khoảng giá, kiểu phòng) — dùng API `/api/rooms/public`
+- **Gộp module chủ nhà:** Xoá `app/landlord/rooms/page.tsx`, toàn bộ CRUD loại phòng gom về trang `app/landlord/properties/page.tsx` (quản lý tòa nhà + loại phòng ở cùng một màn hình) để giảm thao tác chuyển trang
+- **Trang tin đăng có toggle grid/list:** Trang kho phòng hệ thống `/share/system/[token]` thêm switch Grid ↔ List view cho khách duyệt nhanh trên mobile
+- **Upload video phòng:** Component `components/ui/VideoUpload.tsx` + field `videoUrl` trên RoomType, chủ nhà upload 1 video giới thiệu phòng (hiển thị trên trang tin đăng)
+- **Tin đăng liên quan:** API `/api/rooms/related` gợi ý 4 phòng cùng khu vực / cùng khoảng giá hiển thị cuối trang `/share/[token]`
+- **Short share link `/p/{token}`:** Route `app/p/[token]` rút gọn URL chia sẻ, tự redirect sang `/share/[token]` hoặc `/share/system/[token]` tuỳ loại link
+- **Admin > Quản lý phòng:** Cột "Phòng trống" (VD: 3/5) giờ hiện thêm tên phòng trống cụ thể ngay dưới (VD: "201, 301, 501")
+- **Text liên hệ:** Chuẩn hoá text liên hệ MG/Zalo trên tất cả trang public (share link + system share) cho đồng nhất
+- **Sau khi pull code v8:** chạy `npm install && npx prisma db push` (có field mới `videoUrl` trên room_types)
 
 ### v7 — Performance, Security, SEO, PWA, Pre-launch Polish
 - **Database Indexes:** Thêm composite indexes cho các query phổ biến (properties by landlord/company, rooms by property, deals by broker/status, etc.)

@@ -24,7 +24,6 @@ const menuItems: Record<string, { label: string; href: string; icon: string }[]>
   ],
   LANDLORD: [
     { label: 'Tòa nhà', href: '/landlord/properties', icon: '🏠' },
-    { label: 'Loại phòng', href: '/landlord/rooms', icon: '🚪' },
     { label: 'Link chia sẻ', href: '/landlord/share-links', icon: '🔗' },
   ],
 };
@@ -61,7 +60,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   // Which menu item gets the badge
   const badgeHref: Record<string, string> = {
-    LANDLORD: '/landlord/rooms',
+    LANDLORD: '/landlord/properties',
     ADMIN: '/admin/properties',
   };
 
