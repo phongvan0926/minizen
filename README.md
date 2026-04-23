@@ -224,11 +224,12 @@ mixstay/
 
 ## Changelog
 
-### v8.2 — Filter đặc điểm nổi bật trên trang chủ public
-- **5 toggle chip trên PublicSearch:** 🚗 Ô tô đỗ cửa, 🏍️ Để xe máy, ⚡ Sạc xe điện, 🐾 Thú cưng OK, 🌍 Người nước ngoài — chọn nhiều cùng lúc (AND)
-- **API `/api/rooms/public`:** đọc 5 query params (`parkingCar`, `parkingBike`, `evCharging`, `petAllowed`, `foreignerOk`) và nest vào `property: {}` filter
-- **Nút "Xoá lọc":** reset toàn bộ filter (khu vực, kiểu phòng, giá, 5 feature) về default
-- UI chip: khi bật → brand-600 background + trắng; khi tắt → border nhạt, wrap đẹp trên mobile 375px
+### v8.2 (ff6103a) — 2026-04-23
+- Filter "Đặc điểm nổi bật" trên trang chủ public (5 toggle AND): 🚗 Ô tô đỗ cửa, 🏍️ Để xe máy, ⚡ Sạc xe điện, 🐾 Thú cưng OK, 🌍 Người nước ngoài
+- API `/api/rooms/public`: đọc 5 query params (`parkingCar`, `parkingBike`, `evCharging`, `petAllowed`, `foreignerOk`) và nest vào `property: {}` filter
+- Nút "Xoá lọc" reset toàn bộ filter (khu vực, kiểu phòng, giá, 5 feature)
+- UI chip: bật → brand-600 + trắng, tắt → border nhạt; wrap đẹp trên mobile 375px
+- **[Gộp cùng commit] v8.1:** default list view cho landlord/properties + demo account `company@mixstay.vn` + helper `getUserCompany` (`lib/user-company.ts`) + API `/api/me/company` + section "Đơn vị vận hành" trên share link
 
 ### v9 — Hybrid video: upload trực tiếp + embed YouTube/TikTok/Facebook
 - **Hai cách thêm video cho loại phòng:** field `videos[]` (URL file upload, tối đa 3) + field `videoLinks[]` (link YouTube/TikTok/Facebook) — chủ nhà có thể trộn cả hai
