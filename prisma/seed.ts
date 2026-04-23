@@ -39,6 +39,30 @@ async function main() {
     create: { name: 'Phạm Thị Chủ Nhà', email: 'landlord2@mixstay.vn', phone: '0901000006', password, role: 'LANDLORD' },
   });
 
+  // Company demo: chủ nhà operator vận hành tài sản cho 1 công ty BĐS
+  const SEED_COMPANY_ID = 'seed-company-mixhome';
+  const companyB = await prisma.company.upsert({
+    where: { id: SEED_COMPANY_ID },
+    update: {},
+    create: {
+      id: SEED_COMPANY_ID,
+      name: 'Công ty BĐS MixHome',
+      description: 'Đơn vị vận hành & phân phối căn hộ mini cao cấp khu vực Cầu Giấy - Đống Đa.',
+      phone: '02473099999',
+      email: 'info@mixhome.vn',
+      address: 'Tầng 5, 88 Trần Thái Tông, Cầu Giấy, Hà Nội',
+      logo: 'https://api.dicebear.com/7.x/initials/svg?seed=MixHome&backgroundColor=2563eb&textColor=ffffff',
+      zaloGroupLink: 'https://zalo.me/g/mixhome-demo',
+      isActive: true,
+    },
+  });
+
+  const companyLandlord = await prisma.user.upsert({
+    where: { email: 'company@mixstay.vn' },
+    update: {},
+    create: { name: 'Nguyễn Văn Giám Đốc', email: 'company@mixstay.vn', phone: '0912345999', password, role: 'LANDLORD' },
+  });
+
   const customer = await prisma.user.upsert({
     where: { email: 'customer@mixstay.vn' },
     update: {},
@@ -105,6 +129,51 @@ async function main() {
       totalFloors: 5,
       amenities: ['Thang máy', 'Bảo vệ 24/7', 'Rooftop', 'Smart lock'],
       status: 'PENDING',
+    },
+  });
+
+  // Properties operated by companyLandlord, linked to companyB
+  const propC1 = await prisma.property.create({
+    data: {
+      landlordId: companyLandlord.id,
+      companyId: companyB.id,
+      name: 'MixHome Cầu Giấy',
+      description: 'Toà 8 tầng quản lý chuyên nghiệp bởi MixHome, full dịch vụ vệ sinh & bảo trì.',
+      fullAddress: 'Số 22 ngõ 90 Trần Thái Tông, Dịch Vọng Hậu, Cầu Giấy, Hà Nội',
+      district: 'Cầu Giấy',
+      streetName: 'Trần Thái Tông',
+      city: 'Hà Nội',
+      totalFloors: 8,
+      amenities: ['Thang máy', 'Bảo vệ 24/7', 'Camera an ninh', 'Vệ sinh hàng tuần', 'Wifi tốc độ cao'],
+      status: 'APPROVED',
+      zaloPhone: '0912345999',
+      parkingCar: true,
+      parkingBike: true,
+      evCharging: true,
+      petAllowed: false,
+      foreignerOk: true,
+    },
+  });
+
+  const propC2 = await prisma.property.create({
+    data: {
+      landlordId: companyLandlord.id,
+      companyId: companyB.id,
+      name: 'MixHome Đống Đa',
+      description: 'Toà nhà mới xây 2025, gần ĐH Y Hà Nội, vận hành theo chuẩn MixHome.',
+      fullAddress: '36 ngõ 218 Tây Sơn, Đống Đa, Hà Nội',
+      district: 'Đống Đa',
+      streetName: 'Tây Sơn',
+      city: 'Hà Nội',
+      totalFloors: 6,
+      amenities: ['Thang máy', 'Bảo vệ 24/7', 'Camera an ninh', 'Sảnh chung'],
+      status: 'APPROVED',
+      zaloPhone: '0912345999',
+      parkingCar: false,
+      parkingBike: true,
+      evCharging: true,
+      petAllowed: true,
+      foreignerOk: true,
     },
   });
 
@@ -179,6 +248,49 @@ async function main() {
       totalUnits: 3, availableUnits: 0,
       isAvailable: false, isApproved: true,
     },
+    // MixHome Cầu Giấy - 3 loại phòng
+    {
+      propertyId: propC1.id, name: 'Studio 30m² MixHome', typeName: 'studio',
+      areaSqm: 30, priceMonthly: 5500000, deposit: 5500000,
+      description: 'Studio đầy đủ nội thất chuẩn MixHome — bếp riêng, ban công.',
+      amenities: ['Điều hoà', 'Nóng lạnh', 'WC riêng', 'Bếp riêng', 'Ban công', 'Smart TV'],
+      totalUnits: 4, availableUnits: 3, availableRoomNames: '301, 302, 401',
+      isAvailable: true, isApproved: true,
+    },
+    {
+      propertyId: propC1.id, name: '1 Khách 1 Ngủ 38m²', typeName: '1k1n',
+      areaSqm: 38, priceMonthly: 7500000, deposit: 7500000,
+      description: 'Phòng khách + ngủ riêng biệt, full nội thất, view thoáng.',
+      amenities: ['Điều hoà', 'Nóng lạnh', 'WC riêng', 'Bếp riêng', 'Tủ lạnh', 'Máy giặt riêng'],
+      totalUnits: 3, availableUnits: 2, availableRoomNames: '501, 601',
+      isAvailable: true, isApproved: true,
+      shortTermAllowed: true, shortTermMonths: '1,3,6', shortTermPrice: 9000000,
+    },
+    {
+      propertyId: propC1.id, name: '2 Khách 1 Ngủ 50m²', typeName: '2k1n',
+      areaSqm: 50, priceMonthly: 11000000, deposit: 11000000,
+      description: 'Căn hộ rộng rãi cho gia đình nhỏ — 2 ban công, view phố.',
+      amenities: ['Điều hoà', 'Nóng lạnh', 'WC riêng', 'Bếp riêng', 'Tủ lạnh', 'Máy giặt riêng', 'Lò vi sóng'],
+      totalUnits: 2, availableUnits: 1, availableRoomNames: '701',
+      isAvailable: true, isApproved: true,
+    },
+    // MixHome Đống Đa - 2 loại phòng
+    {
+      propertyId: propC2.id, name: 'Phòng đơn 24m²', typeName: 'don',
+      areaSqm: 24, priceMonthly: 3800000, deposit: 3800000,
+      description: 'Phòng nhỏ gọn, full nội thất cơ bản, dành cho 1-2 người.',
+      amenities: ['Điều hoà', 'Nóng lạnh', 'WC riêng', 'Tủ quần áo'],
+      totalUnits: 6, availableUnits: 4, availableRoomNames: '102, 202, 302, 402',
+      isAvailable: true, isApproved: true,
+    },
+    {
+      propertyId: propC2.id, name: 'Gác xép 28m²', typeName: 'gac_xep',
+      areaSqm: 28, priceMonthly: 4500000, deposit: 4500000,
+      description: 'Gác xép sáng sủa, có khu nấu ăn nhỏ.',
+      amenities: ['Điều hoà', 'Nóng lạnh', 'WC riêng', 'Bếp mini', 'Tủ quần áo'],
+      totalUnits: 4, availableUnits: 2, availableRoomNames: '503, 603',
+      isAvailable: true, isApproved: true,
+    },
   ];
 
   const createdRoomTypes = [];
@@ -251,6 +363,7 @@ async function main() {
   console.log('   Admin:    admin@mixstay.vn');
   console.log('   Broker:   broker@mixstay.vn');
   console.log('   Landlord: landlord@mixstay.vn');
+  console.log('   Landlord (Công ty): company@mixstay.vn');
   console.log('   Customer: customer@mixstay.vn');
 }
 

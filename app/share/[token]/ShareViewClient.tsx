@@ -350,6 +350,35 @@ export default function ShareViewClient() {
           </div>
         </div>
 
+        {/* Section 5b: Đơn vị vận hành (chỉ hiện nếu property thuộc công ty) */}
+        {property?.company && (
+          <div className="card border-brand-100 bg-gradient-to-br from-brand-50/40 to-white">
+            <h2 className="font-display font-semibold text-lg mb-3">🏢 Đơn vị vận hành</h2>
+            <div className="flex items-start gap-3">
+              {property.company.logo ? (
+                <img src={property.company.logo} alt={property.company.name}
+                  className="w-12 h-12 rounded-xl object-cover border border-brand-100 flex-shrink-0" />
+              ) : (
+                <div className="w-12 h-12 rounded-xl bg-brand-100 flex items-center justify-center text-2xl flex-shrink-0">
+                  🏢
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-stone-900">{property.company.name}</p>
+                {property.company.description && (
+                  <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">{property.company.description}</p>
+                )}
+                {property.company.zaloGroupLink && (
+                  <a href={property.company.zaloGroupLink} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-medium border border-blue-100 transition-all">
+                    💬 Tham gia nhóm Zalo công ty
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Section 6: Google Maps */}
         <div className="card">
           <h2 className="font-display font-semibold text-lg mb-3">📍 Vị trí & Chỉ đường</h2>

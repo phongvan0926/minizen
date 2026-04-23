@@ -52,6 +52,9 @@ export async function GET(req: NextRequest) {
               // password is NOT selected
             },
           },
+          company: {
+            select: { id: true, name: true, logo: true },
+          },
           roomTypes: {
             select: {
               id: true,

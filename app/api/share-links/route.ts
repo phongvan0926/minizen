@@ -41,6 +41,7 @@ export async function GET(req: NextRequest) {
           id: true, name: true, district: true, streetName: true, city: true,
           amenities: true, images: true, totalFloors: true,
           parkingCar: true, parkingBike: true, evCharging: true, petAllowed: true, foreignerOk: true,
+          company: { select: { id: true, name: true, logo: true, zaloGroupLink: true, description: true } },
           roomTypes: {
             where: { isAvailable: true, isApproved: true, availableUnits: { gt: 0 } },
             select: {
@@ -79,6 +80,7 @@ export async function GET(req: NextRequest) {
                   amenities: true, images: true, totalFloors: true,
                   parkingCar: true, parkingBike: true, evCharging: true, petAllowed: true, foreignerOk: true,
                   // NO fullAddress, lat, lng, landlord phone
+                  company: { select: { id: true, name: true, logo: true, zaloGroupLink: true, description: true } },
                 },
               },
             },

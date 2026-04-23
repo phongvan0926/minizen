@@ -58,6 +58,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   );
   const unreadCount = notifData?.unreadCount || 0;
 
+  // Company info (chỉ LANDLORD: hiện logo + tên công ty trên topbar nếu thuộc công ty)
+  const { data: companyData } = useSWR(
+    session && role === 'LANDLORD' ? '/api/me/company' : null,
+    fetcher,
+    { revalidateOnFocus: false, dedupingInterval: 60000 }
+  );
+  const company = companyData?.company || null;
+
   // Which menu item gets the badge
   const badgeHref: Record<string, string> = {
     LANDLORD: '/landlord/properties',
@@ -80,13 +88,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <span className="text-sm font-medium text-stone-500">
               {role === 'ADMIN' && 'Quản trị'}
               {role === 'BROKER' && 'Môi giới'}
-              {role === 'LANDLORD' && 'Chủ nhà'}
+              {role === 'LANDLORD' && (company ? 'Chủ nhà · Công ty' : 'Chủ nhà')}
             </span>
+            {company && (
+              <span className="hidden md:inline-flex items-center gap-1.5 ml-2 px-2.5 py-1 rounded-lg bg-brand-50 border border-brand-100 text-brand-700 text-xs font-medium">
+                {company.logo ? (
+                  <img src={company.logo} alt={company.name} className="w-4 h-4 rounded-sm object-cover" />
+                ) : (
+                  <span>🏢</span>
+                )}
+                <span className="truncate max-w-[160px]">{company.name}</span>
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right hidden sm:block">
               <p className="text-sm font-medium text-stone-900">{session.user?.name}</p>
-              <p className="text-xs text-stone-500">{session.user?.email}</p>
+              <p className="text-xs text-stone-500">
+                {company ? company.name : session.user?.email}
+              </p>
             </div>
             <div className="w-9 h-9 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-semibold text-sm">
               {session.user?.name?.charAt(0).toUpperCase()}

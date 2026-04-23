@@ -224,6 +224,12 @@ mixstay/
 
 ## Changelog
 
+### v8.2 — Filter đặc điểm nổi bật trên trang chủ public
+- **5 toggle chip trên PublicSearch:** 🚗 Ô tô đỗ cửa, 🏍️ Để xe máy, ⚡ Sạc xe điện, 🐾 Thú cưng OK, 🌍 Người nước ngoài — chọn nhiều cùng lúc (AND)
+- **API `/api/rooms/public`:** đọc 5 query params (`parkingCar`, `parkingBike`, `evCharging`, `petAllowed`, `foreignerOk`) và nest vào `property: {}` filter
+- **Nút "Xoá lọc":** reset toàn bộ filter (khu vực, kiểu phòng, giá, 5 feature) về default
+- UI chip: khi bật → brand-600 background + trắng; khi tắt → border nhạt, wrap đẹp trên mobile 375px
+
 ### v9 — Hybrid video: upload trực tiếp + embed YouTube/TikTok/Facebook
 - **Hai cách thêm video cho loại phòng:** field `videos[]` (URL file upload, tối đa 3) + field `videoLinks[]` (link YouTube/TikTok/Facebook) — chủ nhà có thể trộn cả hai
 - **Upload qua signed URL:** API mới `app/api/upload/signed-url/route.ts` dùng Supabase `createSignedUploadUrl()` — client PUT file thẳng lên Storage bucket `videos`, KHÔNG qua Vercel serverless (tránh giới hạn 4.5MB và timeout)
@@ -366,4 +372,7 @@ NEXT_PUBLIC_APPLE_ENABLED=true
 | Admin | admin@mixstay.vn | 123456 |
 | Môi giới | broker@mixstay.vn | 123456 |
 | Chủ nhà | landlord@mixstay.vn | 123456 |
+| Chủ nhà (Công ty) | company@mixstay.vn | 123456 |
 | Khách | customer@mixstay.vn | 123456 |
+
+> Tài khoản `company@mixstay.vn` có toàn bộ tòa nhà thuộc **Công ty BĐS MixHome** → topbar hiện logo + tên công ty, card tòa nhà có badge 🏢 và trang share `/p/{token}` có section "Đơn vị vận hành" + link nhóm Zalo công ty. So sánh với `landlord@mixstay.vn` (chủ nhà cá nhân, không có companyId) để thấy khác biệt UI.

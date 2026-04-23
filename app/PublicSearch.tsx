@@ -23,6 +23,16 @@ const TYPE_LABEL: Record<string, string> = Object.fromEntries(
   ROOM_TYPES.map(r => [r.value, r.label])
 );
 
+type FeatureKey = 'parkingCar' | 'parkingBike' | 'evCharging' | 'petAllowed' | 'foreignerOk';
+
+const FEATURES: { key: FeatureKey; label: string; icon: string }[] = [
+  { key: 'parkingCar', label: 'Ô tô đỗ cửa', icon: '🚗' },
+  { key: 'parkingBike', label: 'Để xe máy', icon: '🏍️' },
+  { key: 'evCharging', label: 'Sạc xe điện', icon: '⚡' },
+  { key: 'petAllowed', label: 'Thú cưng OK', icon: '🐾' },
+  { key: 'foreignerOk', label: 'Người nước ngoài', icon: '🌍' },
+];
+
 type PublicRoom = {
   id: string;
   name: string;
@@ -96,6 +106,24 @@ export default function PublicSearch() {
   const [typeName, setTypeName] = useState('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
+  const [features, setFeatures] = useState<Record<FeatureKey, boolean>>({
+    parkingCar: false,
+    parkingBike: false,
+    evCharging: false,
+    petAllowed: false,
+    foreignerOk: false,
+  });
+
+  const toggleFeature = (key: FeatureKey) =>
+    setFeatures(prev => ({ ...prev, [key]: !prev[key] }));
+
+  const resetFilters = () => {
+    setDistrict('');
+    setTypeName('');
+    setMinPrice('');
+    setMaxPrice('');
+    setFeatures({ parkingCar: false, parkingBike: false, evCharging: false, petAllowed: false, foreignerOk: false });
+  };
 
   const [results, setResults] = useState<PublicRoom[] | null>(null);
   const [total, setTotal] = useState(0);
@@ -113,6 +141,9 @@ export default function PublicSearch() {
       if (typeName) params.set('typeName', typeName);
       if (minPrice) params.set('minPrice', minPrice);
       if (maxPrice) params.set('maxPrice', maxPrice);
+      (Object.keys(features) as FeatureKey[]).forEach(k => {
+        if (features[k]) params.set(k, 'true');
+      });
       params.set('limit', '12');
 
       const res = await fetch(`/api/rooms/public?${params.toString()}`);
@@ -206,6 +237,40 @@ export default function PublicSearch() {
               >
                 {loading ? 'Đang tìm...' : 'Tìm phòng'}
               </button>
+            </div>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-stone-100">
+            <div className="flex items-center justify-between mb-2 gap-2">
+              <label className="block text-xs font-medium text-stone-500">Đặc điểm nổi bật</label>
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="text-xs font-medium text-stone-500 hover:text-brand-600 transition-colors"
+              >
+                Xoá lọc
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {FEATURES.map(f => {
+                const active = features[f.key];
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => toggleFeature(f.key)}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border transition-all ${
+                      active
+                        ? 'bg-brand-600 border-brand-600 text-white shadow-sm'
+                        : 'bg-white border-stone-200 text-stone-600 hover:border-stone-300'
+                    }`}
+                    aria-pressed={active}
+                  >
+                    <span>{f.icon}</span>
+                    <span>{f.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </form>

@@ -14,19 +14,32 @@ export async function GET(req: NextRequest) {
     const minPrice = url.searchParams.get('minPrice');
     const maxPrice = url.searchParams.get('maxPrice');
 
+    const featureFlags = {
+      parkingCar: url.searchParams.get('parkingCar') === 'true',
+      parkingBike: url.searchParams.get('parkingBike') === 'true',
+      evCharging: url.searchParams.get('evCharging') === 'true',
+      petAllowed: url.searchParams.get('petAllowed') === 'true',
+      foreignerOk: url.searchParams.get('foreignerOk') === 'true',
+    };
+
+    const propertyWhere: any = { status: 'APPROVED', isActive: true };
+    if (district) propertyWhere.district = { contains: district, mode: 'insensitive' };
+    if (featureFlags.parkingCar) propertyWhere.parkingCar = true;
+    if (featureFlags.parkingBike) propertyWhere.parkingBike = true;
+    if (featureFlags.evCharging) propertyWhere.evCharging = true;
+    if (featureFlags.petAllowed) propertyWhere.petAllowed = true;
+    if (featureFlags.foreignerOk) propertyWhere.foreignerOk = true;
+
     const where: any = {
       isApproved: true,
       isAvailable: true,
       availableUnits: { gt: 0 },
-      property: { status: 'APPROVED', isActive: true },
+      property: propertyWhere,
     };
 
     if (typeName) where.typeName = typeName;
     if (minPrice) where.priceMonthly = { ...where.priceMonthly, gte: parseFloat(minPrice) };
     if (maxPrice) where.priceMonthly = { ...where.priceMonthly, lte: parseFloat(maxPrice) };
-    if (district) {
-      where.property = { ...where.property, district: { contains: district, mode: 'insensitive' } };
-    }
 
     const { page, limit, skip } = getPaginationParams(url);
 

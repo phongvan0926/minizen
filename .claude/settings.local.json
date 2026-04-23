@@ -17,7 +17,13 @@
       "Bash(git commit -m ':*)",
       "Bash(git push:*)",
       "Bash(xargs cat:*)",
-      "Bash(node -e \"require\\('zod'\\)\")"
+      "Bash(node -e \"require\\('zod'\\)\")",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(echo \"EXIT_CODE=$?\")",
+      "Bash(git check-ignore *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git remote *)",
+      "Bash(git fetch *)"
     ]
   }
 }

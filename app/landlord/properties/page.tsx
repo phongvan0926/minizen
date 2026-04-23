@@ -48,7 +48,7 @@ export default function LandlordPropertiesPage() {
   const { stats } = useDashboardStats();
 
   // View mode
-  const [viewMode, setViewMode] = useState<ViewMode>('card');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   useEffect(() => {
     const saved = typeof window !== 'undefined' ? localStorage.getItem('landlordViewMode') : null;
     if (saved === 'card' || saved === 'list') setViewMode(saved);
@@ -408,6 +408,11 @@ export default function LandlordPropertiesPage() {
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <h2 className="font-display font-semibold text-xl text-stone-900">{p.name}</h2>
                     <span className={'badge ' + getStatusColor(p.status)}>{getStatusLabel(p.status)}</span>
+                    {p.company && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-brand-50 border border-brand-100 text-brand-700 text-xs font-medium">
+                        🏢 {p.company.name}
+                      </span>
+                    )}
                   </div>
                   <p className="text-sm text-stone-500">{p.fullAddress}</p>
                   <p className="text-xs text-stone-400">{p.district} • {p.totalFloors} tầng</p>
