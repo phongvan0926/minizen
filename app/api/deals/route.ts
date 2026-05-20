@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma';
 import { getPaginationParams, paginatedResponse } from '@/lib/pagination';
 import { applyRateLimit } from '@/lib/rate-limit';
 import { dealCreateSchema, dealUpdateSchema, validateBody } from '@/lib/validations';
+import { hasPermission } from '@/lib/permissions';
 
 export async function GET(req: NextRequest) {
   const rateLimited = applyRateLimit(req, 'api');
@@ -25,6 +26,8 @@ export async function GET(req: NextRequest) {
     const { page, limit, skip } = getPaginationParams(url);
 
     const isBroker = session.user.role === 'BROKER';
+    const isAdminFamily = session.user.role === 'ADMIN' || session.user.role === 'ADMIN_STAFF';
+    const canSeeFinancials = isAdminFamily ? hasPermission(session.user as any, 'VIEW_FINANCIAL_REPORTS') : !isBroker;
 
     const [deals, total] = await Promise.all([
       prisma.deal.findMany({
@@ -39,7 +42,7 @@ export async function GET(req: NextRequest) {
           dealPrice: true,
           commissionTotal: true,
           commissionBroker: true,
-          commissionCompany: isBroker ? false : true, // Broker không thấy phần công ty
+          commissionCompany: canSeeFinancials,
           commissionRate: true,
           notes: true,
           status: true,
@@ -82,7 +85,20 @@ export async function GET(req: NextRequest) {
       prisma.deal.count({ where }),
     ]);
 
-    return NextResponse.json(paginatedResponse(deals, total, page, limit));
+    // Field-strip cho ADMIN_STAFF thiếu VIEW_FINANCIAL_REPORTS:
+    // strip TOÀN BỘ số tài chính (kể cả commissionBroker — hoa hồng của broker khác, không phải của staff).
+    // BROKER caller KHÔNG bị strip — họ chỉ thấy deal của chính mình (where.brokerId), cần biết hoa hồng của mình.
+    const stripped = (isAdminFamily && !canSeeFinancials)
+      ? deals.map(d => ({
+          ...d,
+          dealPrice: null,
+          commissionTotal: null,
+          commissionBroker: null,
+          commissionCompany: null,
+        }))
+      : deals;
+
+    return NextResponse.json(paginatedResponse(stripped, total, page, limit));
   } catch (error) {
     return NextResponse.json({ error: 'Lỗi server' }, { status: 500 });
   }

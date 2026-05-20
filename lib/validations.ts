@@ -143,13 +143,27 @@ export const shareLinkCreateSchema = z.object({
 });
 
 // ===== User (Admin) =====
+const ROLES = ['ADMIN', 'ADMIN_STAFF', 'BROKER', 'LANDLORD', 'CUSTOMER'] as const;
+const PERMISSIONS = [
+  'TRANSFER_PROPERTY_OWNERSHIP',
+  'DELETE_PROPERTY',
+  'EDIT_COMMISSION',
+  'APPROVE_LISTINGS',
+  'MANAGE_USERS',
+  'VIEW_FINANCIAL_REPORTS',
+  'EXPORT_DATA',
+  'MANAGE_COMPANIES',
+  'MANAGE_SYSTEM_SHARE_LINKS',
+] as const;
+
 export const userCreateSchema = z.object({
   name: z.string().min(2, 'Tên tối thiểu 2 ký tự').max(100),
   email: z.string().email('Email không hợp lệ'),
   phone: z.string().max(20).optional().nullable(),
   password: z.string().min(6, 'Mật khẩu tối thiểu 6 ký tự'),
-  role: z.enum(['ADMIN', 'BROKER', 'LANDLORD', 'CUSTOMER'], { message: 'Vai trò không hợp lệ' }),
+  role: z.enum(ROLES, { message: 'Vai trò không hợp lệ' }),
   isActive: z.boolean().optional(),
+  permissions: z.array(z.enum(PERMISSIONS)).optional(),
 });
 
 export const userUpdateSchema = z.object({
@@ -158,8 +172,9 @@ export const userUpdateSchema = z.object({
   email: z.string().email('Email không hợp lệ').optional(),
   phone: z.string().max(20).optional().nullable(),
   password: z.string().min(6, 'Mật khẩu tối thiểu 6 ký tự').optional().or(z.literal('')),
-  role: z.enum(['ADMIN', 'BROKER', 'LANDLORD', 'CUSTOMER']).optional(),
+  role: z.enum(ROLES).optional(),
   isActive: z.boolean().optional(),
+  permissions: z.array(z.enum(PERMISSIONS)).optional(),
 });
 
 // ===== Notification =====

@@ -9,10 +9,23 @@ datasource db {
 }
 
 enum Role {
-  ADMIN
+  ADMIN          // super-admin — bypass tất cả permission check
+  ADMIN_STAFF    // staff — chỉ làm được những gì có trong User.permissions[]
   BROKER
   LANDLORD
   CUSTOMER
+}
+
+enum Permission {
+  TRANSFER_PROPERTY_OWNERSHIP   // đổi landlord của 1 tòa nhà
+  DELETE_PROPERTY               // xóa tòa nhà
+  EDIT_COMMISSION               // sửa commissionJson + setting commission_broker_percent
+  APPROVE_LISTINGS              // duyệt Property/RoomType (status, isApproved)
+  MANAGE_USERS                  // tạo/sửa/xóa user
+  VIEW_FINANCIAL_REPORTS        // xem doanh thu/hoa hồng công ty (field-level)
+  EXPORT_DATA                   // export Excel
+  MANAGE_COMPANIES              // tạo/sửa/xóa company
+  MANAGE_SYSTEM_SHARE_LINKS     // tạo/xóa system share link cấp admin
 }
 
 enum PropertyStatus {
@@ -45,6 +58,7 @@ model User {
   setupComplete Boolean   @default(false) // true sau khi user chọn role (OAuth) hoặc đăng ký thủ công
   avatar        String?
   isActive      Boolean   @default(true)
+  permissions   Permission[] @default([])  // CHỈ có hiệu lực khi role = ADMIN_STAFF
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

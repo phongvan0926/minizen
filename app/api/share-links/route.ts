@@ -6,6 +6,7 @@ import { nanoid } from 'nanoid';
 import { getPaginationParams, paginatedResponse } from '@/lib/pagination';
 import { applyRateLimit } from '@/lib/rate-limit';
 import { shareLinkCreateSchema, validateBody } from '@/lib/validations';
+import { requirePermission } from '@/lib/permissions-server';
 
 export async function GET(req: NextRequest) {
   const rateLimited = applyRateLimit(req, 'api');
@@ -172,9 +173,14 @@ export async function POST(req: NextRequest) {
     const token = nanoid(12);
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-    // System link for landlord
+    // System link for landlord / admin / admin-staff with permission
     if (body.isSystem) {
-      if (session.user.role !== 'LANDLORD' && session.user.role !== 'ADMIN') {
+      if (session.user.role === 'LANDLORD' || session.user.role === 'ADMIN') {
+        // landlord tạo system link cho chính mình, super-admin OK
+      } else if (session.user.role === 'ADMIN_STAFF') {
+        const denial = requirePermission(session, 'MANAGE_SYSTEM_SHARE_LINKS');
+        if (denial) return denial;
+      } else {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
 
@@ -193,8 +199,8 @@ export async function POST(req: NextRequest) {
       }, { status: 201 });
     }
 
-    // Regular share link: BROKER, LANDLORD (own room types), or ADMIN
-    if (session.user.role !== 'BROKER' && session.user.role !== 'ADMIN' && session.user.role !== 'LANDLORD') {
+    // Regular (non-system) share link: BROKER, LANDLORD (own RT), ADMIN, ADMIN_STAFF — không cần permission đặc biệt (hỗ trợ tác nghiệp)
+    if (!['BROKER', 'LANDLORD', 'ADMIN', 'ADMIN_STAFF'].includes(session.user.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -261,6 +267,22 @@ export async function DELETE(req: NextRequest) {
     const url = new URL(req.url);
     const id = url.searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
+
+    // Load để check isSystem
+    const link = await prisma.shareLink.findUnique({ where: { id }, select: { isSystem: true, brokerId: true } });
+    if (!link) return NextResponse.json({ error: 'Không tìm thấy link' }, { status: 404 });
+
+    // Ownership: owner luôn xóa được link của mình
+    const isOwner = link.brokerId === (session.user as any).id;
+    if (!isOwner) {
+      if (link.isSystem) {
+        // Admin-staff xóa system link của người khác → cần MANAGE_SYSTEM_SHARE_LINKS (super-admin bypass)
+        const denial = requirePermission(session, 'MANAGE_SYSTEM_SHARE_LINKS');
+        if (denial) return denial;
+      } else if (session.user.role !== 'ADMIN' && session.user.role !== 'ADMIN_STAFF') {
+        return NextResponse.json({ error: 'Không có quyền' }, { status: 403 });
+      }
+    }
 
     await prisma.shareLink.delete({ where: { id } });
     return NextResponse.json({ success: true });

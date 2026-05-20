@@ -1,7 +1,9 @@
 'use client';
 import { useState, useMemo, useRef } from 'react';
+import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 import { formatCurrency } from '@/lib/utils';
+import { hasPermission } from '@/lib/permissions';
 import RoomTypeForm from '@/components/forms/RoomTypeForm';
 import Pagination from '@/components/ui/Pagination';
 import OptimizedImage from '@/components/ui/OptimizedImage';
@@ -131,6 +133,11 @@ function validateRow(row: Record<string, any>, idx: number): string[] {
 }
 
 export default function AdminRoomsPage() {
+  const { data: session } = useSession();
+  const canExport = hasPermission(session?.user as any, 'EXPORT_DATA');
+  const canApprove = hasPermission(session?.user as any, 'APPROVE_LISTINGS');
+  const canEditCommission = hasPermission(session?.user as any, 'EDIT_COMMISSION');
+
   // Pagination
   const [page, setPage] = useState(1);
 
@@ -386,8 +393,9 @@ export default function AdminRoomsPage() {
             📥 Import Excel
             <input ref={fileInputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFileUpload} />
           </label>
-          <button onClick={exportCurrentData}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors border border-orange-200">
+          <button onClick={exportCurrentData} disabled={!canExport}
+            title={canExport ? '' : 'Cần quyền Xuất dữ liệu (EXPORT_DATA)'}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors border border-orange-200 disabled:opacity-40 disabled:cursor-not-allowed">
             📤 Xuất Excel {hasFilters ? '(lọc)' : ''}
           </button>
           <button onClick={openCreate} className="btn-primary">+ Thêm tin đăng</button>
@@ -508,8 +516,9 @@ export default function AdminRoomsPage() {
                       )}
                     </td>
                     <td className="table-cell">
-                      <button onClick={() => toggleApproval(r.id, r.isApproved)}
-                        className={`badge cursor-pointer transition-colors ${r.isApproved ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}>
+                      <button onClick={() => toggleApproval(r.id, r.isApproved)} disabled={!canApprove}
+                        title={canApprove ? '' : 'Cần quyền Duyệt tin đăng (APPROVE_LISTINGS)'}
+                        className={`badge cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${r.isApproved ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}>
                         {r.isApproved ? '✓ Đã duyệt' : 'Chờ duyệt'}
                       </button>
                     </td>
@@ -569,6 +578,7 @@ export default function AdminRoomsPage() {
                 properties={properties.map((p: any) => ({ id: p.id, name: p.name, district: p.district }))}
                 onSubmit={handleFormSubmit}
                 isAdmin={true}
+                canEditCommission={canEditCommission}
                 loading={submitting}
               />
             </div>

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { nanoid } from 'nanoid';
 import { applyRateLimit } from '@/lib/rate-limit';
+import { requirePermission } from '@/lib/permissions-server';
 
 // GET /api/share-links/system?token=xxx — public: lấy tất cả RoomType trống của landlord
 export async function GET(req: NextRequest) {
@@ -88,7 +89,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.role !== 'LANDLORD' && session.user.role !== 'ADMIN') {
+    if (session.user.role === 'LANDLORD' || session.user.role === 'ADMIN') {
+      // OK
+    } else if (session.user.role === 'ADMIN_STAFF') {
+      const denial = requirePermission(session, 'MANAGE_SYSTEM_SHARE_LINKS');
+      if (denial) return denial;
+    } else {
       return NextResponse.json({ error: 'Chỉ chủ nhà hoặc admin mới tạo được link hệ thống' }, { status: 403 });
     }
 

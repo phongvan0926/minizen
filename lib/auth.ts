@@ -89,6 +89,7 @@ export const authOptions: NextAuthOptions = {
         token.id = dbUser.id;
         token.role = dbUser.role;
         token.phone = dbUser.phone ?? undefined;
+        token.permissions = (dbUser as any).permissions ?? [];
 
         // OAuth user who hasn't completed role setup yet
         if (account?.type === 'oauth' && !dbUser.password && !dbUser.setupComplete) {
@@ -106,6 +107,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).id = token.id;
         (session.user as any).phone = token.phone;
         (session.user as any).needsRoleSetup = token.needsRoleSetup ?? false;
+        (session.user as any).permissions = token.permissions ?? [];
       }
       return session;
     },

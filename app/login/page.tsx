@@ -44,7 +44,7 @@ export default function LoginPage() {
         const sessionRes = await fetch('/api/auth/session');
         const session = await sessionRes.json();
         const role = session?.user?.role;
-        if (role === 'ADMIN') router.push('/admin/properties');
+        if (role === 'ADMIN' || role === 'ADMIN_STAFF') router.push('/admin/properties');
         else if (role === 'BROKER') router.push('/broker/inventory');
         else if (role === 'LANDLORD') router.push('/landlord/properties');
         else router.push('/');
@@ -66,7 +66,7 @@ export default function LoginPage() {
   const hasAnyOAuth = OAUTH_ENABLED.google || OAUTH_ENABLED.facebook || OAUTH_ENABLED.apple;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-stone-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-stone-50 px-4 py-8">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -161,16 +161,24 @@ export default function LoginPage() {
         {/* Demo accounts */}
         <div className="mt-6 card p-5">
           <p className="text-xs font-medium text-stone-500 uppercase tracking-wide mb-3">Tài khoản demo</p>
-          <div className="space-y-2">
+          <p className="text-[11px] text-stone-400 mb-3">Bấm để tự điền email và mật khẩu. Mật khẩu cho tất cả tài khoản demo: <code className="bg-stone-100 px-1 rounded">123456</code></p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
-              { role: 'Admin', email: 'admin@mixstay.vn' },
-              { role: 'Môi giới', email: 'broker@mixstay.vn' },
-              { role: 'Chủ nhà', email: 'landlord@mixstay.vn' },
+              { icon: '👑', role: 'Super Admin',      email: 'admin@mixstay.vn',     color: 'border-red-200 bg-red-50/30 text-red-700' },
+              { icon: '🛡️', role: 'Staff (manager)',  email: 'manager@mixstay.vn',   color: 'border-violet-200 bg-violet-50/30 text-violet-700' },
+              { icon: '🛡️', role: 'Staff',            email: 'staff@mixstay.vn',     color: 'border-blue-200 bg-blue-50/30 text-blue-700' },
+              { icon: '🤝', role: 'Môi giới',          email: 'broker@mixstay.vn',    color: 'border-amber-200 bg-amber-50/30 text-amber-700' },
+              { icon: '🏠', role: 'Chủ nhà',           email: 'landlord@mixstay.vn',  color: 'border-emerald-200 bg-emerald-50/30 text-emerald-700' },
+              { icon: '🏢', role: 'Chủ nhà công ty',   email: 'company@mixstay.vn',   color: 'border-teal-200 bg-teal-50/30 text-teal-700' },
+              { icon: '👤', role: 'Khách',             email: 'customer@mixstay.vn',  color: 'border-stone-200 bg-stone-50/30 text-stone-700' },
             ].map(d => (
-              <button key={d.role} onClick={() => setForm({ email: d.email, password: '123456' })}
-                className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-stone-50 transition-colors flex justify-between items-center group">
-                <span className="text-stone-700">{d.role}</span>
-                <span className="text-stone-400 text-xs group-hover:text-brand-600">{d.email}</span>
+              <button key={d.email} onClick={() => setForm({ email: d.email, password: '123456' })}
+                className={`text-left px-3 py-2 rounded-lg border text-sm transition-all hover:shadow-sm hover:-translate-y-0.5 ${d.color}`}>
+                <div className="flex items-center gap-1.5">
+                  <span>{d.icon}</span>
+                  <span className="font-medium truncate">{d.role}</span>
+                </div>
+                <p className="text-[10px] text-stone-500 mt-0.5 truncate">{d.email}</p>
               </button>
             ))}
           </div>

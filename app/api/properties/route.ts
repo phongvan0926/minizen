@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma';
 import { getPaginationParams, paginatedResponse } from '@/lib/pagination';
 import { applyRateLimit } from '@/lib/rate-limit';
 import { propertyCreateSchema, propertyUpdateSchema, validateBody } from '@/lib/validations';
+import { requirePermission } from '@/lib/permissions-server';
 
 export async function GET(req: NextRequest) {
   const rateLimited = applyRateLimit(req, 'api');
@@ -147,10 +148,32 @@ export async function PUT(req: NextRequest) {
 
     const { id, ...data } = body;
 
-    // Verify ownership
+    // Verify ownership for landlord; load current for admin/staff (need for permission check + landlordId transfer)
+    let current: { landlordId: string; status: string } | null = null;
     if (session.user.role === 'LANDLORD') {
-      const prop = await prisma.property.findFirst({ where: { id, landlordId: session.user.id } });
+      const prop = await prisma.property.findFirst({ where: { id, landlordId: session.user.id }, select: { landlordId: true, status: true } });
       if (!prop) return NextResponse.json({ error: 'Không có quyền' }, { status: 403 });
+      current = prop;
+      // Landlord không được đổi landlordId (chuyển sở hữu cho người khác)
+      if (data.landlordId && data.landlordId !== current.landlordId) {
+        return NextResponse.json({ error: 'Chủ nhà không có quyền chuyển sở hữu tòa nhà' }, { status: 403 });
+      }
+    } else if (session.user.role === 'ADMIN' || session.user.role === 'ADMIN_STAFF') {
+      current = await prisma.property.findUnique({ where: { id }, select: { landlordId: true, status: true } });
+      if (!current) return NextResponse.json({ error: 'Không tìm thấy tòa nhà' }, { status: 404 });
+
+      // TRANSFER_PROPERTY_OWNERSHIP: chỉ check khi đổi landlord (super-admin bypass trong requirePermission)
+      if (data.landlordId && data.landlordId !== current.landlordId) {
+        const denial = requirePermission(session, 'TRANSFER_PROPERTY_OWNERSHIP');
+        if (denial) return denial;
+      }
+      // APPROVE_LISTINGS: chỉ check khi đổi status
+      if (data.status && data.status !== current.status) {
+        const denial = requirePermission(session, 'APPROVE_LISTINGS');
+        if (denial) return denial;
+      }
+    } else {
+      return NextResponse.json({ error: 'Không có quyền' }, { status: 403 });
     }
 
     const property = await prisma.property.update({
@@ -168,6 +191,7 @@ export async function PUT(req: NextRequest) {
         ...(data.landlordNotes !== undefined && { landlordNotes: data.landlordNotes }),
         ...(data.amenities && { amenities: data.amenities }),
         ...(data.images !== undefined && { images: data.images }),
+        ...(data.landlordId && session.user.role !== 'LANDLORD' && { landlordId: data.landlordId }),
         ...(data.parkingCar !== undefined && { parkingCar: data.parkingCar }),
         ...(data.parkingBike !== undefined && { parkingBike: data.parkingBike }),
         ...(data.evCharging !== undefined && { evCharging: data.evCharging }),
@@ -197,9 +221,15 @@ export async function DELETE(req: NextRequest) {
     const id = url.searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
-    if (session.user.role !== 'ADMIN') {
+    if (session.user.role === 'LANDLORD') {
+      // Landlord chỉ xóa property của mình
       const prop = await prisma.property.findFirst({ where: { id, landlordId: session.user.id } });
       if (!prop) return NextResponse.json({ error: 'Không có quyền' }, { status: 403 });
+    } else if (session.user.role === 'ADMIN_STAFF') {
+      const denial = requirePermission(session, 'DELETE_PROPERTY');
+      if (denial) return denial;
+    } else if (session.user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Không có quyền' }, { status: 403 });
     }
 
     await prisma.property.delete({ where: { id } });

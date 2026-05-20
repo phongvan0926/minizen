@@ -29,6 +29,8 @@ interface PropertyFormProps {
   initialData?: any;
   onSubmit: (data: any) => void;
   isAdmin?: boolean;
+  /** Cho phép đổi chủ nhà khi EDIT (cần permission TRANSFER_PROPERTY_OWNERSHIP). Mặc định false. */
+  canTransferOwnership?: boolean;
   loading?: boolean;
   companies?: { id: string; name: string }[];
   landlords?: { id: string; name: string; email?: string }[];
@@ -69,12 +71,16 @@ const defaultData: PropertyData = {
   status: 'PENDING',
 };
 
-export default function PropertyForm({ initialData, onSubmit, isAdmin = false, loading = false, companies = [], landlords = [] }: PropertyFormProps) {
+export default function PropertyForm({ initialData, onSubmit, isAdmin = false, canTransferOwnership = false, loading = false, companies = [], landlords = [] }: PropertyFormProps) {
   const [form, setForm] = useState<PropertyData>(defaultData);
   const [companyId, setCompanyId] = useState<string>(initialData?.companyId || '');
   const [landlordId, setLandlordId] = useState<string>(initialData?.landlordId || '');
   const [landlordSearch, setLandlordSearch] = useState('');
   const isEdit = !!initialData?.id;
+  const originalLandlordId = initialData?.landlordId || '';
+  // Selector chủ nhà khóa khi: đang edit VÀ không có quyền transfer
+  const landlordLocked = isEdit && !canTransferOwnership;
+  const landlordChanged = isEdit && !!landlordId && landlordId !== originalLandlordId;
 
   const filteredLandlords = landlordSearch.trim()
     ? landlords.filter(l => {
@@ -136,7 +142,8 @@ export default function PropertyForm({ initialData, onSubmit, isAdmin = false, l
     onSubmit({
       ...form,
       companyId: companyId || null,
-      ...(isAdmin && landlordId ? { landlordId } : {}),
+      // Gửi landlordId khi: tạo mới (admin), hoặc edit + có quyền transfer
+      ...(isAdmin && landlordId && (!isEdit || canTransferOwnership) ? { landlordId } : {}),
     });
   };
 
@@ -173,10 +180,11 @@ export default function PropertyForm({ initialData, onSubmit, isAdmin = false, l
                 />
               )}
               <select
-                className="input-field"
+                className="input-field disabled:opacity-60 disabled:cursor-not-allowed"
                 value={landlordId}
                 onChange={e => setLandlordId(e.target.value)}
-                disabled={isEdit}
+                disabled={landlordLocked}
+                title={landlordLocked ? 'Cần quyền Chuyển sở hữu tòa nhà để đổi chủ nhà' : ''}
               >
                 <option value="">-- Chọn chủ nhà --</option>
                 {filteredLandlords.map(l => (
@@ -185,8 +193,16 @@ export default function PropertyForm({ initialData, onSubmit, isAdmin = false, l
                   </option>
                 ))}
               </select>
-              {isEdit && (
-                <p className="text-xs text-stone-400 mt-1">Không thể đổi chủ nhà khi sửa tòa nhà.</p>
+              {landlordLocked && (
+                <p className="text-xs text-stone-400 mt-1">🔒 Cần quyền <strong>Chuyển sở hữu tòa nhà</strong> (TRANSFER_PROPERTY_OWNERSHIP) để đổi chủ nhà.</p>
+              )}
+              {isEdit && canTransferOwnership && !landlordChanged && (
+                <p className="text-xs text-stone-400 mt-1">Bạn có quyền chuyển sở hữu — chọn chủ nhà khác để chuyển tòa nhà này.</p>
+              )}
+              {landlordChanged && (
+                <p className="text-xs text-amber-600 mt-1 font-medium">
+                  ⚠️ Đang chuyển tòa nhà sang chủ nhà khác. Tất cả tin đăng, giao dịch, link chia sẻ thuộc tòa sẽ chuyển theo.
+                </p>
               )}
               {!isEdit && landlords.length === 0 && (
                 <p className="text-xs text-amber-600 mt-1">Chưa có user role LANDLORD nào. Tạo user chủ nhà ở mục Quản lý người dùng trước.</p>

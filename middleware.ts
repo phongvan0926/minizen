@@ -12,9 +12,13 @@ export default withAuth(
 
     const role = token.role as string;
 
-    // Admin routes
-    if (pathname.startsWith('/admin') && role !== 'ADMIN') {
+    // Admin routes — cả ADMIN (super) lẫn ADMIN_STAFF
+    if (pathname.startsWith('/admin') && role !== 'ADMIN' && role !== 'ADMIN_STAFF') {
       return NextResponse.redirect(new URL('/login', req.url));
+    }
+    // Settings route — staff không có quyền (endpoint chưa wrap)
+    if (pathname.startsWith('/admin/settings') && role === 'ADMIN_STAFF') {
+      return NextResponse.redirect(new URL('/admin/properties', req.url));
     }
 
     // Broker routes

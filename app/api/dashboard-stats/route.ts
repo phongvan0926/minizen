@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { applyRateLimit } from '@/lib/rate-limit';
+import { hasPermission } from '@/lib/permissions';
 
 export async function GET(req: NextRequest) {
   const rateLimited = applyRateLimit(req, 'api');
@@ -14,7 +15,8 @@ export async function GET(req: NextRequest) {
 
     const role = session.user.role;
 
-    if (role === 'ADMIN') {
+    if (role === 'ADMIN' || role === 'ADMIN_STAFF') {
+      const canSeeFinancials = hasPermission(session.user as any, 'VIEW_FINANCIAL_REPORTS');
       const [totalProperties, totalRoomTypes, availableRoomTypes, totalDeals, confirmedDeals, totalBrokers, totalLandlords, pendingProperties] = await Promise.all([
         prisma.property.count(),
         prisma.roomType.count(),
@@ -40,13 +42,24 @@ export async function GET(req: NextRequest) {
         },
       });
 
+      // Field-strip cho staff không có VIEW_FINANCIAL_REPORTS: giữ key, set null
+      const strippedDeals = canSeeFinancials
+        ? recentDeals
+        : recentDeals.map(d => ({
+            ...d,
+            commissionTotal: null,
+            commissionBroker: null,
+            commissionCompany: null,
+            dealPrice: null,
+          }));
+
       return NextResponse.json({
         totalProperties, totalRooms: totalRoomTypes, availableRooms: availableRoomTypes,
         totalDeals, confirmedDeals,
         totalBrokers, totalLandlords, pendingProperties,
-        totalRevenue: revenueResult._sum.commissionCompany || 0,
-        totalCommission: revenueResult._sum.commissionTotal || 0,
-        recentDeals,
+        totalRevenue: canSeeFinancials ? (revenueResult._sum.commissionCompany || 0) : null,
+        totalCommission: canSeeFinancials ? (revenueResult._sum.commissionTotal || 0) : null,
+        recentDeals: strippedDeals,
       });
     }
 

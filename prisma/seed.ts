@@ -11,8 +11,29 @@ async function main() {
   // Create users
   const admin = await prisma.user.upsert({
     where: { email: 'admin@mixstay.vn' },
-    update: {},
+    update: { role: 'ADMIN', permissions: [] },
     create: { name: 'Admin Công ty', email: 'admin@mixstay.vn', phone: '0901000001', password, role: 'ADMIN' },
+  });
+
+  // Admin staff demo — 2 mức quyền khác nhau để test RBAC + field-strip
+  await prisma.user.upsert({
+    where: { email: 'staff@mixstay.vn' },
+    update: { role: 'ADMIN_STAFF', permissions: ['APPROVE_LISTINGS', 'VIEW_FINANCIAL_REPORTS'] },
+    create: {
+      name: 'Trần Văn Staff', email: 'staff@mixstay.vn', phone: '0901000007', password,
+      role: 'ADMIN_STAFF', permissions: ['APPROVE_LISTINGS', 'VIEW_FINANCIAL_REPORTS'],
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: 'manager@mixstay.vn' },
+    update: { role: 'ADMIN_STAFF', permissions: ['APPROVE_LISTINGS', 'EXPORT_DATA', 'MANAGE_COMPANIES', 'MANAGE_SYSTEM_SHARE_LINKS'] },
+    create: {
+      name: 'Lê Thị Manager', email: 'manager@mixstay.vn', phone: '0901000008', password,
+      role: 'ADMIN_STAFF',
+      // KHÔNG có VIEW_FINANCIAL_REPORTS → demo field-strip: thấy dashboard nhưng số tài chính = null
+      permissions: ['APPROVE_LISTINGS', 'EXPORT_DATA', 'MANAGE_COMPANIES', 'MANAGE_SYSTEM_SHARE_LINKS'],
+    },
   });
 
   const broker1 = await prisma.user.upsert({
@@ -361,6 +382,8 @@ async function main() {
   console.log('\n🎉 Seed complete!');
   console.log('\n📋 Demo accounts (password: 123456):');
   console.log('   Admin:    admin@mixstay.vn');
+  console.log('   Staff:    staff@mixstay.vn    (APPROVE_LISTINGS, VIEW_FINANCIAL_REPORTS)');
+  console.log('   Manager:  manager@mixstay.vn  (APPROVE_LISTINGS, EXPORT_DATA, MANAGE_COMPANIES, MANAGE_SYSTEM_SHARE_LINKS)');
   console.log('   Broker:   broker@mixstay.vn');
   console.log('   Landlord: landlord@mixstay.vn');
   console.log('   Landlord (Công ty): company@mixstay.vn');

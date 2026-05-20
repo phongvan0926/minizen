@@ -6,16 +6,19 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/fetcher';
+import { hasPermission } from '@/lib/permissions';
 
-const menuItems: Record<string, { label: string; href: string; icon: string }[]> = {
+type MenuItem = { label: string; href: string; icon: string; perm?: 'MANAGE_USERS'; staffHidden?: boolean };
+
+const menuItems: Record<string, MenuItem[]> = {
   ADMIN: [
     { label: 'Tổng quan', href: '/admin/properties', icon: '📊' },
     { label: 'Công ty', href: '/admin/companies', icon: '🏛️' },
     { label: 'Tòa nhà', href: '/admin/properties', icon: '🏢' },
     { label: 'Tin đăng', href: '/admin/rooms', icon: '📝' },
     { label: 'Giao dịch', href: '/admin/deals', icon: '💰' },
-    { label: 'Người dùng', href: '/admin/users', icon: '👥' },
-    { label: 'Cài đặt', href: '/admin/settings', icon: '⚙️' },
+    { label: 'Người dùng', href: '/admin/users', icon: '👥', perm: 'MANAGE_USERS' },
+    { label: 'Cài đặt', href: '/admin/settings', icon: '⚙️', staffHidden: true },
   ],
   BROKER: [
     { label: 'Kho hàng', href: '/broker/inventory', icon: '📦' },
@@ -48,7 +51,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!session) return null;
 
   const role = (session.user as any).role as string;
-  const items = menuItems[role] || [];
+  // ADMIN_STAFF dùng menu của ADMIN, lọc theo permissions
+  const rawItems = menuItems[role === 'ADMIN_STAFF' ? 'ADMIN' : role] || [];
+  const items = rawItems.filter(item => {
+    if (role !== 'ADMIN_STAFF') return true;
+    if (item.staffHidden) return false;                       // VD: Cài đặt — endpoint chưa wrap, ẩn cho staff
+    if (item.perm && !hasPermission(session.user as any, item.perm)) return false;
+    return true;
+  });
 
   // Notification badge - poll every 30s
   const { data: notifData } = useSWR(
@@ -87,6 +97,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <span className="text-stone-300">|</span>
             <span className="text-sm font-medium text-stone-500">
               {role === 'ADMIN' && 'Quản trị'}
+              {role === 'ADMIN_STAFF' && 'Quản trị · Staff'}
               {role === 'BROKER' && 'Môi giới'}
               {role === 'LANDLORD' && (company ? 'Chủ nhà · Công ty' : 'Chủ nhà')}
             </span>

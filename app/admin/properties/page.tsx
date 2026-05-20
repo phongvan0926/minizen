@@ -1,7 +1,9 @@
 'use client';
 import { useState, useMemo } from 'react';
+import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 import { formatCurrency, getStatusColor, getStatusLabel } from '@/lib/utils';
+import { hasPermission } from '@/lib/permissions';
 import PropertyForm from '@/components/forms/PropertyForm';
 import Pagination from '@/components/ui/Pagination';
 import OptimizedImage from '@/components/ui/OptimizedImage';
@@ -9,6 +11,11 @@ import { useProperties, useCompanies, useDashboardStats, useUsers } from '@/hook
 import { SkeletonStats, SkeletonTable } from '@/components/ui/Skeleton';
 
 export default function AdminPropertiesPage() {
+  const { data: session } = useSession();
+  const canApprove = hasPermission(session?.user as any, 'APPROVE_LISTINGS');
+  const canDelete = hasPermission(session?.user as any, 'DELETE_PROPERTY');
+  const canTransfer = hasPermission(session?.user as any, 'TRANSFER_PROPERTY_OWNERSHIP');
+
   const [page, setPage] = useState(1);
 
   const { stats } = useDashboardStats();
@@ -240,11 +247,17 @@ export default function AdminPropertiesPage() {
                         </button>
                         {p.status === 'PENDING' && (
                           <>
-                            <button onClick={() => handleApprove(p.id, 'APPROVED')} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors">Duyệt</button>
-                            <button onClick={() => handleApprove(p.id, 'REJECTED')} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-700 hover:bg-red-100 transition-colors">Từ chối</button>
+                            <button onClick={() => handleApprove(p.id, 'APPROVED')} disabled={!canApprove}
+                              title={canApprove ? '' : 'Cần quyền Duyệt tin đăng (APPROVE_LISTINGS)'}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">Duyệt</button>
+                            <button onClick={() => handleApprove(p.id, 'REJECTED')} disabled={!canApprove}
+                              title={canApprove ? '' : 'Cần quyền Duyệt tin đăng (APPROVE_LISTINGS)'}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-700 hover:bg-red-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">Từ chối</button>
                           </>
                         )}
-                        <button onClick={() => handleDelete(p.id)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-colors">Xoá</button>
+                        <button onClick={() => handleDelete(p.id)} disabled={!canDelete}
+                          title={canDelete ? '' : 'Cần quyền Xóa tòa nhà (DELETE_PROPERTY)'}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">Xoá</button>
                       </div>
                     </td>
                   </tr>
@@ -285,6 +298,7 @@ export default function AdminPropertiesPage() {
                 initialData={editingProperty || undefined}
                 onSubmit={handleFormSubmit}
                 isAdmin={true}
+                canTransferOwnership={canTransfer}
                 loading={submitting}
                 companies={companies}
                 landlords={(landlordUsers || []).map((u: any) => ({ id: u.id, name: u.name, email: u.email }))}

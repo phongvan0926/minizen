@@ -224,6 +224,21 @@ mixstay/
 
 ## Changelog
 
+### v8.4 — 2026-04-30
+- **Login page 7 demo cards:** grid 4 cột (2×4, ô cuối trống), mỗi card icon + role + email, click auto-fill. Thêm `company@`, `customer@`, `staff@`, `manager@`. Helper text mật khẩu chung `123456`.
+- **RBAC cho admin staff (permission system):**
+  - Schema: `enum Role` thêm `ADMIN_STAFF`; `enum Permission` (9 quyền: TRANSFER_PROPERTY_OWNERSHIP, DELETE_PROPERTY, EDIT_COMMISSION, APPROVE_LISTINGS, MANAGE_USERS, VIEW_FINANCIAL_REPORTS, EXPORT_DATA, MANAGE_COMPANIES, MANAGE_SYSTEM_SHARE_LINKS); `User.permissions Permission[]`.
+  - `lib/permissions.ts` (client-safe): `hasPermission()`, `ALL_ADMIN_PERMISSIONS`. `lib/permissions-server.ts`: `requirePermission()` API guard. ADMIN bypass tất cả; ADMIN_STAFF cần permission trong array.
+  - JWT/session callback (`lib/auth.ts`) include `permissions`.
+  - **API guard 10 endpoint:** properties PUT (transfer + approve), DELETE (delete); rooms POST/PUT (commission + approve); users CRUD (manage users + chống privilege escalation); share-links POST/DELETE + system POST (manage system links). dashboard-stats + deals GET: **field-strip** (giữ key, set null) số tài chính nếu thiếu VIEW_FINANCIAL_REPORTS.
+  - **UI gate:** sidebar ẩn "Người dùng"/"Cài đặt" theo quyền; nút Xuất Excel / Xoá tòa nhà / Duyệt tin / section Hoa hồng disable + tooltip nếu thiếu quyền tương ứng.
+  - **Admin/users editor:** chọn role=ADMIN_STAFF → hiện 9 checkbox permission (label + mô tả tiếng Việt), pre-check theo permission hiện có. Badge phân biệt Super Admin (👑) vs Staff (🛡️ X quyền).
+  - middleware: `/admin/*` cho cả ADMIN + ADMIN_STAFF; `/admin/settings` chặn staff.
+- **Admin chuyển sở hữu tòa nhà:** PropertyForm khi edit hiện selector chủ nhà — enabled nếu có TRANSFER_PROPERTY_OWNERSHIP, disabled + tooltip nếu không. Đổi chủ nhà → warning "tin đăng/giao dịch/link share chuyển theo". RoomType ownership qua `property.landlordId` (không cần cascade).
+- **Seed:** thêm `staff@mixstay.vn` `[APPROVE_LISTINGS, VIEW_FINANCIAL_REPORTS]` + `manager@mixstay.vn` `[APPROVE_LISTINGS, EXPORT_DATA, MANAGE_COMPANIES, MANAGE_SYSTEM_SHARE_LINKS]` (không có VIEW_FINANCIAL_REPORTS → demo field-strip).
+- **TODO v9:** wrap permission cho `api/companies` (MANAGE_COMPANIES) + `api/settings` (EDIT_COMMISSION) — hiện skip, staff bị chặn ở UI (ẩn menu).
+- **Sau khi pull code v8.4:** `npx prisma db push --skip-generate` (additive: Permission enum + permissions column), rồi `npm run db:seed`.
+
 ### v8.3.1 — 2026-04-29 (hotfix)
 - **PriceRangeSlider 0 - 50.000.000 step 500.000:** đổi range từ 1tr-20tr sang 0-50tr để cover hết spectrum thị trường (phòng 0₫ rất hiếm nhưng giữ slot, phòng cao cấp lên tới 50tr).
 - **Explicit apply (no live filter):**

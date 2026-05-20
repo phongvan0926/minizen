@@ -51,6 +51,8 @@ interface RoomTypeFormProps {
   properties: Property[];
   onSubmit: (data: any) => void;
   isAdmin?: boolean;
+  /** Khi false → khóa section Hoa hồng (admin-staff thiếu EDIT_COMMISSION). Mặc định true. */
+  canEditCommission?: boolean;
   loading?: boolean;
 }
 
@@ -122,7 +124,7 @@ function parseVndInput(str: string): number {
   return parseInt(str.replace(/\D/g, ''), 10) || 0;
 }
 
-export default function RoomTypeForm({ initialData, properties, onSubmit, isAdmin = false, loading = false }: RoomTypeFormProps) {
+export default function RoomTypeForm({ initialData, properties, onSubmit, isAdmin = false, canEditCommission = true, loading = false }: RoomTypeFormProps) {
   const [form, setForm] = useState<RoomTypeData>(defaultData);
   const [priceDisplay, setPriceDisplay] = useState('');
   const [depositDisplay, setDepositDisplay] = useState('');
@@ -301,10 +303,14 @@ export default function RoomTypeForm({ initialData, properties, onSubmit, isAdmi
       images: form.images,
       videos: form.videos,
       videoLinks: form.videoLinks,
-      commissionJson: JSON.stringify(commissionObj),
       landlordNotes: form.landlordNotes,
       isApproved: form.isApproved,
     };
+
+    // Chỉ gửi commissionJson khi user có quyền sửa — tránh staff bị API 403 dù không đổi gì
+    if (canEditCommission) {
+      (submitData as any).commissionJson = JSON.stringify(commissionObj);
+    }
 
     onSubmit(submitData);
   };
@@ -652,6 +658,12 @@ export default function RoomTypeForm({ initialData, properties, onSubmit, isAdmi
       {/* Section 7: Hoa hồng cho MG */}
       <div className="card">
         <h3 className="text-lg font-semibold text-stone-900 mb-4">Hoa hồng cho Môi giới</h3>
+        {!canEditCommission && (
+          <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+            <p className="text-xs text-amber-700">🔒 Bạn không có quyền sửa hoa hồng (cần permission EDIT_COMMISSION). Phần này chỉ xem.</p>
+          </div>
+        )}
+        <fieldset disabled={!canEditCommission} className={!canEditCommission ? 'opacity-60' : ''}>
         <div className="space-y-3">
           {form.commissionRows.map((row, index) => (
             <div key={index} className="flex items-start gap-3">
@@ -710,6 +722,7 @@ export default function RoomTypeForm({ initialData, properties, onSubmit, isAdmi
             Thêm mức hoa hồng
           </button>
         </div>
+        </fieldset>
       </div>
 
       {/* Section 8: Lưu ý cho MG */}

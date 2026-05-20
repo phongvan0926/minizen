@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma';
 import { getPaginationParams, paginatedResponse } from '@/lib/pagination';
 import { applyRateLimit } from '@/lib/rate-limit';
 import { roomTypeCreateSchema, roomTypeUpdateSchema, validateBody } from '@/lib/validations';
+import { requirePermission } from '@/lib/permissions-server';
 
 export async function GET(req: NextRequest) {
   const rateLimited = applyRateLimit(req, 'api');
@@ -184,6 +185,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: validated.error }, { status: 400 });
     }
 
+    // EDIT_COMMISSION: staff cần permission để set commissionJson
+    if (session.user.role === 'ADMIN_STAFF' && body.commissionJson) {
+      const denial = requirePermission(session, 'EDIT_COMMISSION');
+      if (denial) return denial;
+    }
+
     const roomType = await prisma.roomType.create({
       data: {
         propertyId: body.propertyId,
@@ -235,6 +242,20 @@ export async function PUT(req: NextRequest) {
     }
 
     const { id, ...data } = body;
+
+    // Staff permission checks
+    if (session.user.role === 'ADMIN_STAFF') {
+      // EDIT_COMMISSION — chỉ khi đổi commissionJson
+      if (data.commissionJson !== undefined) {
+        const denial = requirePermission(session, 'EDIT_COMMISSION');
+        if (denial) return denial;
+      }
+      // APPROVE_LISTINGS — chỉ khi đổi isApproved
+      if (data.isApproved !== undefined) {
+        const denial = requirePermission(session, 'APPROVE_LISTINGS');
+        if (denial) return denial;
+      }
+    }
 
     const roomType = await prisma.roomType.update({
       where: { id },

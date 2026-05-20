@@ -69,7 +69,8 @@ export function getStatusLabel(status: string): string {
 
 export function getRoleLabel(role: string): string {
   const labels: Record<string, string> = {
-    ADMIN: 'Quản trị viên',
+    ADMIN: 'Super Admin',
+    ADMIN_STAFF: 'Staff',
     BROKER: 'Môi giới',
     LANDLORD: 'Chủ nhà',
     CUSTOMER: 'Khách hàng',
@@ -79,7 +80,8 @@ export function getRoleLabel(role: string): string {
 
 export function getRoleColor(role: string): string {
   const colors: Record<string, string> = {
-    ADMIN: 'bg-purple-100 text-purple-800',
+    ADMIN: 'bg-red-100 text-red-800',
+    ADMIN_STAFF: 'bg-blue-100 text-blue-800',
     BROKER: 'bg-orange-100 text-orange-800',
     LANDLORD: 'bg-amber-100 text-amber-800',
     CUSTOMER: 'bg-blue-100 text-blue-800',

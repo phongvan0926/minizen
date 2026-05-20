@@ -6,23 +6,27 @@ import { formatDate, getRoleLabel, getRoleColor } from '@/lib/utils';
 import Pagination from '@/components/ui/Pagination';
 import { useUsers } from '@/hooks/useData';
 import { SkeletonStats, SkeletonCardGrid } from '@/components/ui/Skeleton';
+import { ALL_ADMIN_PERMISSIONS, type AdminPermission } from '@/lib/permissions';
 
 const ROLE_AVATAR_COLORS: Record<string, string> = {
-  ADMIN: 'bg-purple-500',
+  ADMIN: 'bg-red-500',
+  ADMIN_STAFF: 'bg-blue-500',
   BROKER: 'bg-orange-500',
   LANDLORD: 'bg-amber-500',
   CUSTOMER: 'bg-blue-500',
 };
 
-const ROLES = ['ADMIN', 'BROKER', 'LANDLORD', 'CUSTOMER'];
+const ROLES = ['ADMIN', 'ADMIN_STAFF', 'BROKER', 'LANDLORD', 'CUSTOMER'];
 
 const EMPTY_FORM = {
   name: '', email: '', phone: '', password: '', role: 'BROKER' as string, isActive: true,
+  permissions: [] as AdminPermission[],
 };
 
 type User = {
   id: string; name: string; email: string; phone: string | null;
   role: string; isActive: boolean; createdAt: string;
+  permissions?: AdminPermission[];
 };
 
 export default function AdminUsersPage() {
@@ -96,9 +100,22 @@ export default function AdminUsersPage() {
 
   const openEdit = (u: User) => {
     setEditUser(u);
-    setForm({ name: u.name, email: u.email, phone: u.phone || '', password: '', role: u.role, isActive: u.isActive });
+    setForm({
+      name: u.name, email: u.email, phone: u.phone || '', password: '',
+      role: u.role, isActive: u.isActive,
+      permissions: u.permissions ?? [],  // pre-check theo permissions hiện có
+    });
     setShowPassword(false);
     setShowModal(true);
+  };
+
+  const togglePermission = (perm: AdminPermission) => {
+    setForm(f => ({
+      ...f,
+      permissions: f.permissions.includes(perm)
+        ? f.permissions.filter(p => p !== perm)
+        : [...f.permissions, perm],
+    }));
   };
 
   const closeModal = () => { setShowModal(false); setEditUser(null); };
@@ -166,7 +183,7 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
         {ROLES.map(r => (
           <div key={r} className="card p-3 text-center">
             <div className="text-xl font-bold text-stone-900">{stats.byRole[r] || 0}</div>
@@ -230,6 +247,14 @@ export default function AdminUsersPage() {
                     </div>
                     <p className="text-sm text-stone-500 truncate">{u.email}</p>
                     {u.phone && <p className="text-sm text-stone-400 mt-0.5">{u.phone}</p>}
+                    {u.role === 'ADMIN_STAFF' && (
+                      <p className="text-[11px] text-blue-600 mt-1 font-medium">
+                        🛡️ {u.permissions?.length || 0} quyền được cấp
+                      </p>
+                    )}
+                    {u.role === 'ADMIN' && (
+                      <p className="text-[11px] text-red-600 mt-1 font-medium">👑 Toàn quyền</p>
+                    )}
                   </div>
                 </div>
 
@@ -361,7 +386,39 @@ export default function AdminUsersPage() {
                 {editUser?.id === currentUserId && (
                   <p className="text-xs text-stone-400 mt-1">Không thể đổi vai trò của chính mình</p>
                 )}
+                {form.role === 'ADMIN' && (
+                  <p className="text-xs text-red-500 mt-1">⚠️ Super Admin có toàn quyền, bỏ qua mọi giới hạn permission.</p>
+                )}
               </div>
+
+              {/* Permissions — chỉ hiện khi role = ADMIN_STAFF */}
+              {form.role === 'ADMIN_STAFF' && (
+                <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-3">
+                  <p className="text-sm font-medium text-stone-700 mb-1">Quyền hạn Staff</p>
+                  <p className="text-xs text-stone-500 mb-3">
+                    Tick các quyền cấp cho nhân viên này. Không tick = không có quyền tương ứng.
+                  </p>
+                  <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                    {ALL_ADMIN_PERMISSIONS.map(p => (
+                      <label key={p.value} className="flex items-start gap-2.5 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          checked={form.permissions.includes(p.value)}
+                          onChange={() => togglePermission(p.value)}
+                          className="mt-0.5 w-4 h-4 rounded border-stone-300 text-brand-600 focus:ring-brand-500"
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-medium text-stone-800 group-hover:text-brand-700">{p.label}</span>
+                          <span className="block text-[11px] text-stone-500 leading-snug">{p.desc}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-stone-400 mt-2">
+                    Đã chọn {form.permissions.length}/{ALL_ADMIN_PERMISSIONS.length} quyền
+                  </p>
+                </div>
+              )}
 
               {/* Trạng thái */}
               <div className="flex items-center justify-between py-2">

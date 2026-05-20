@@ -6,6 +6,7 @@ import { hash } from 'bcryptjs';
 import { getPaginationParams, paginatedResponse } from '@/lib/pagination';
 import { applyRateLimit } from '@/lib/rate-limit';
 import { userCreateSchema, userUpdateSchema, validateBody } from '@/lib/validations';
+import { requirePermission } from '@/lib/permissions-server';
 
 // Safe user select — NEVER return password
 const safeUserSelect = {
@@ -15,8 +16,26 @@ const safeUserSelect = {
   phone: true,
   role: true,
   isActive: true,
+  permissions: true,
   createdAt: true,
 } as const;
+
+function guardManageUsers(session: any) {
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (session.user.role === 'ADMIN') return null;
+  if (session.user.role === 'ADMIN_STAFF') {
+    return requirePermission(session, 'MANAGE_USERS');
+  }
+  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+}
+
+/** Staff không được tạo/promote người khác lên role=ADMIN (privilege escalation prevention). */
+function guardRoleEscalation(session: any, targetRole?: string) {
+  if (session.user.role === 'ADMIN_STAFF' && targetRole === 'ADMIN') {
+    return NextResponse.json({ error: 'Staff không thể tạo/gán role Super Admin' }, { status: 403 });
+  }
+  return null;
+}
 
 export async function GET(req: NextRequest) {
   const rateLimited = applyRateLimit(req, 'api');
@@ -24,9 +43,8 @@ export async function GET(req: NextRequest) {
 
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const denial = guardManageUsers(session);
+    if (denial) return denial;
 
     const url = new URL(req.url);
     const role = url.searchParams.get('role');
@@ -70,9 +88,8 @@ export async function POST(req: NextRequest) {
 
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const denial = guardManageUsers(session);
+    if (denial) return denial;
 
     const body = await req.json();
     const validated = validateBody(userCreateSchema, body);
@@ -80,7 +97,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: validated.error }, { status: 400 });
     }
 
-    const { name, email, phone, password, role, isActive } = validated.data;
+    const { name, email, phone, password, role, isActive, permissions } = validated.data;
+
+    const esc = guardRoleEscalation(session, role);
+    if (esc) return esc;
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
@@ -89,7 +109,11 @@ export async function POST(req: NextRequest) {
 
     const hashed = await hash(password, 12);
     const user = await prisma.user.create({
-      data: { name, email, phone: phone || null, password: hashed, role, isActive: isActive ?? true },
+      data: {
+        name, email, phone: phone || null, password: hashed, role,
+        isActive: isActive ?? true,
+        permissions: role === 'ADMIN_STAFF' ? (permissions ?? []) : [],
+      },
       select: safeUserSelect,
     });
 
@@ -105,9 +129,8 @@ export async function PUT(req: NextRequest) {
 
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const denial = guardManageUsers(session);
+    if (denial) return denial;
 
     const body = await req.json();
     const validated = validateBody(userUpdateSchema, body);
@@ -115,9 +138,12 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: validated.error }, { status: 400 });
     }
 
-    const { id, name, email, phone, password, role, isActive } = validated.data;
+    const { id, name, email, phone, password, role, isActive, permissions } = validated.data;
 
-    const currentUserId = (session.user as any).id;
+    const currentUserId = (session!.user as any).id;
+
+    const esc = guardRoleEscalation(session, role);
+    if (esc) return esc;
 
     // Không cho đổi role chính mình
     if (id === currentUserId && role) {
@@ -141,6 +167,16 @@ export async function PUT(req: NextRequest) {
     if (role) updateData.role = role;
     if (isActive !== undefined) updateData.isActive = isActive;
 
+    // Permissions chỉ có ý nghĩa với ADMIN_STAFF. Nếu role đổi sang khác → reset.
+    if (permissions !== undefined || role) {
+      const effectiveRole = role ?? (await prisma.user.findUnique({ where: { id }, select: { role: true } }))?.role;
+      if (effectiveRole === 'ADMIN_STAFF') {
+        if (permissions !== undefined) updateData.permissions = permissions;
+      } else {
+        updateData.permissions = [];
+      }
+    }
+
     if (password && password.trim().length > 0) {
       updateData.password = await hash(password, 12);
     }
@@ -163,15 +199,14 @@ export async function DELETE(req: NextRequest) {
 
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const denial = guardManageUsers(session);
+    if (denial) return denial;
 
     const url = new URL(req.url);
     const id = url.searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'Thiếu id' }, { status: 400 });
 
-    const currentUserId = (session.user as any).id;
+    const currentUserId = (session!.user as any).id;
     if (id === currentUserId) {
       return NextResponse.json({ error: 'Không thể xoá tài khoản đang đăng nhập' }, { status: 400 });
     }
